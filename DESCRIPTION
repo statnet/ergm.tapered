@@ -1,7 +1,7 @@
 Package: ergm.tapered
 Type: Package
 Title: A wrapper around `ergm` implementing Tapered ERGMs
-Version: 1.0-2
+Version: 1.0-3
 Date: 2018-02-15
 Authors@R: c(
 	  person("Pavel N.", "Krivitsky", role=c("aut","cre"), email="pavel@uow.edu.au"),
