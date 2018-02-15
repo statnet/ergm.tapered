@@ -1,2 +1,2 @@
 #' @useDynLib ergm.tapered
-
+NULL

@@ -1,4 +1,4 @@
-
+#' @import ergm statnet.common
 InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("formula", "coef", "m"),
@@ -7,6 +7,7 @@ InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
                       required = c(TRUE, TRUE, FALSE))
   f <- a$formula
   beta <- a$coef
+  nws <- a$m
   if(length(f)==2) f <- nonsimp.update.formula(f, nw~.)
   else nw <- ergm.getnetwork(f)
 
@@ -27,13 +28,13 @@ InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
     cbind(ergm.etagrad(x, m$etamap), 0)
   }
 
-  params <- rep(list(NULL), coef.length.model(m))
-  names(params) <- coef.names.model(m, canonical=FALSE)
+  params <- rep(list(NULL), nparam(m))
+  names(params) <- param_names(m, canonical=FALSE)
 
-  cnt <- c(paste0('Taper(',m$coef.names,",",beta,')'), "Taper_Penalty")
+  cnt <- c(paste0('Taper(',param_names(m, canonical=TRUE),",",beta,')'), "Taper_Penalty")
   
   list(name="taper_term", coef.names = cnt,
        inputs=c(beta, inputs, gs0-nws), # Note: what gets passed is the difference between the empty network and the observed network.
-       dependence=TRUE, emptynwstats = c(gs, sum((gs0-nws)^2*beta)),
+       dependence=TRUE, emptynwstats = c(gs0, sum((gs0-nws)^2*beta)),
   map = map, gradient = gradient, params = params)
 }
