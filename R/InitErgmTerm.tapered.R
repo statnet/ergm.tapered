@@ -51,5 +51,5 @@ InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
   list(name="taper_term", coef.names = cnt,
        inputs=c(beta, inputs, gs0-nws), # Note: what gets passed is the difference between the empty network and the observed network.
        dependence=TRUE, emptynwstats = c(gs0, sum((gs0-nws)^2*beta)),
-  map = map, gradient = gradient, params = params)
+       map = map, gradient = gradient, params = params, minpar=m$etamap$mintheta, maxpar=m$etamap$maxtheta)
 }
