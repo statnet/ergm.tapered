@@ -46,6 +46,7 @@
 \seealso{\code{\link[=ergm-package]{ergm}} package, \code{\link{search.ergmTerms}}, \code{\link{ergm}}, \code{\link{network}}, \code{\link{\%v\%}}, \code{\link{\%n\%}}}
 \examples{
 data(florentine)
-summary(ergm(flomarriage ~ Taper(~edges + triangles, c(.1, .1))))
+m <- summary(flomarriage~edges + triangles)
+summary(ergm(flomarriage ~ Taper(~edges + triangles, coef=c(.1, .1),m=m)))
 }
 \keyword{models}

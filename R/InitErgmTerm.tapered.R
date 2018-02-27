@@ -1,10 +1,10 @@
-#' @import ergm statnet.common
+#' @import ergm statnet.common network
 InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("formula", "coef", "m"),
                       vartypes = c("formula", "numeric", "numeric"),
                       defaultvalues = list(NULL, NULL, NULL),
-                      required = c(TRUE, FALSE, FALSE))
+                      required = c(TRUE, TRUE, TRUE))
   f <- a$formula
   beta <- a$coef
   nws <- a$m
@@ -17,10 +17,10 @@ InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
   if(!is.null(beta)){ taper.mult <- beta }else{ taper.mult <- 1 }
   # TODO: Names matching here?
   if(length(nws)==length(taper.mult) & length(nws) > 1) {
-    message("Using a tapered version of the model (based on passed tapering scale).")
+    #message("Using a tapered version of the model (based on passed tapering scale).")
     beta<-taper.mult
   }else{if(length(taper.mult)==1){
-    message("Using a tapered version of the model (based on default tapering scale).")
+    #message("Using a tapered version of the model (based on default tapering scale).")
     beta<-taper.mult / ((2^2) * nws)
   }else{
      stop("Invalid tapering parameter vector beta: ",
@@ -47,7 +47,8 @@ InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
   names(params) <- param_names(m, canonical=FALSE)
 
   cnt <- c(paste0('Taper(',param_names(m, canonical=TRUE),",",beta,')'), "Taper_Penalty")
-  
+  #print(beta)
+  #print(nws)
   list(name="taper_term", coef.names = cnt,
        inputs=c(beta, inputs, gs0-nws), # Note: what gets passed is the difference between the empty network and the observed network.
        dependence=TRUE, emptynwstats = c(gs0, sum((gs0-nws)^2*beta)),
