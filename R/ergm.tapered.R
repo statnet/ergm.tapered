@@ -56,7 +56,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL,
   }
   fit$tapering.centers <- ostats
   fit$tapering.coef <- coef
-  fit$orig.formula
+  fit$orig.formula <- formula
   class(fit) <- c("tapered.ergm",class(fit))
   
   fit
@@ -65,7 +65,6 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL,
 
 
 .tapered.hessian <- function(sample, coef){
-  mvp <- colMeans(sample)
   cv <- var(sample)
   
   np <-ncol(cv)
