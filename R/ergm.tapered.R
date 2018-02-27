@@ -36,10 +36,12 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL,
   npar <- length(coef)
   
   # do some formula magic
-  newformula <- statnet.common::nonsimp.update.formula(formula,.~Taper(~.,coef=coef,m=m))
+  newformula <- statnet.common::nonsimp.update.formula(formula,
+                                                       .~Taper(~.,coef=.taper.coef,m=.taper.center), environment(), 
+                                                       from.new=TRUE)
   env <- new.env(parent=environment(formula))
-  env$m <- ostats
-  env$coef <- coef
+  env$.taper.center <- ostats
+  env$.taper.coef <- coef
   environment(newformula) <- env
   
   
@@ -48,7 +50,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL,
   
   # post processs fit to alter hessian etc
   sample <- fit$sample[[1]][,1:npar,drop=FALSE]
-  if(!is.null(tapering.centers)){
+  if(is.null(tapering.centers)){
     hess <- .tapered.hessian(sample, coef)
     fit$hessian <- hess
     fit$covar <- -solve(hess)
