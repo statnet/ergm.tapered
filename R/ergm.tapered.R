@@ -36,13 +36,12 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL,
   npar <- length(coef)
   
   # do some formula magic
-  textstats <- paste0("c(",paste(ostats,collapse=","),")")
-  textcoef <- paste0("c(",paste(coef,collapse=","),")")
-  netexp <- deparse(formula[[2]])
-  termsexp <- deparse(formula[[3]])
-  newformula <- paste0(netexp, "~Taper(~", termsexp,", coef=",textcoef,", m=",textstats,")")
-  newformula <- as.formula(newformula)
-  environment(newformula) <- environment(formula)
+  newformula <- statnet.common::nonsimp.update.formula(formula,.~Taper(~.,coef=coef,m=m))
+  env <- new.env(parent=environment(formula))
+  env$m <- ostats
+  env$coef <- coef
+  environment(newformula) <- env
+  
   
   # fit ergm
   fit <- ergm(newformula, control=control,...)
