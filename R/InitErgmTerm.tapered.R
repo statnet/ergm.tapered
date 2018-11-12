@@ -1,6 +1,6 @@
 #' @import ergm statnet.common network
 InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
-  a <- check.ErgmTerm(nw, arglist,
+  a <- ergm::check.ErgmTerm(nw, arglist,
                       varnames = c("formula", "coef", "m"),
                       vartypes = c("formula", "numeric", "numeric"),
                       defaultvalues = list(NULL, NULL, NULL),
@@ -8,11 +8,11 @@ InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
   f <- a$formula
   beta <- a$coef
   nws <- a$m
-  if(length(f)==2) f <- nonsimp.update.formula(f, nw~.)
+  if(length(f)==2) f <- statnet.common::nonsimp_update.formula(f, nw~.)
   else nw <- ergm.getnetwork(f)
 
-  m <- ergm.getmodel(f, nw, response=response,...)
-  NVL(nws) <- ergm.getglobalstats(nw, m, response=response)
+  m <- ergm::ergm_model(f, nw,...)
+  NVL(nws) <- summary(m)
 
   if(!is.null(beta)){ taper.mult <- beta }else{ taper.mult <- 1 }
   # TODO: Names matching here?
@@ -29,11 +29,9 @@ InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
           " or 1, but got ",length(taper.mult),".")
   }}
 
-  Clist <- ergm.Cprepare(nw, m, response=response)
-
-  inputs <- pack.Clist_as_num(Clist)
+  inputs <- ergm::to_ergm_Cdouble(m)
   
-  gs0 <- ergm.emptynwstats.model(m)
+  gs0 <- summary(m)
 
   map <- function(x, n, ...){
     c(ergm.eta(x, m$etamap), -1)

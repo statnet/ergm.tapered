@@ -36,7 +36,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL,
   npar <- length(coef)
   
   # do some formula magic
-  newformula <- statnet.common::nonsimp.update.formula(formula,
+  newformula <- statnet.common::nonsimp_update.formula(formula,
                                                        .~Taper(~.,coef=.taper.coef,m=.taper.center), environment(), 
                                                        from.new=TRUE)
   env <- new.env(parent=environment(formula))
