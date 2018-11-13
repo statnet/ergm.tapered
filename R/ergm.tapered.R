@@ -20,6 +20,7 @@
 #' }
 #' @export
 ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL, 
+			 family="taper",
                          control = control.ergm(MCMLE.termination="Hotelling"), ...){
   
   if(is.null(tapering.centers))
@@ -28,17 +29,31 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL,
     ostats <- tapering.centers
   
   # set tapering coefficient
-  if(is.null(beta)){
-    coef <- 1 / (r^2 * pmax(1,abs(ostats)))
-  }else{
-    coef <- 1 / beta^2
-  }
-  npar <- length(coef)
+  coef <- switch(family,
+    "stereo"={
+      if(is.null(beta)){
+        1
+      }else{
+        beta
+      }},
+      {if(is.null(beta)){
+        1 / (r^2 * pmax(1,abs(ostats)))
+      }else{
+        1 / beta^2
+      }}
+  )
+  npar <- length(ostats)
   
   # do some formula magic
-  newformula <- statnet.common::nonsimp_update.formula(formula,
-                                                       .~Taper(~.,coef=.taper.coef,m=.taper.center), environment(), 
-                                                       from.new=TRUE)
+
+  newformula <- switch(family,
+    "stereo"=statnet.common::nonsimp_update.formula(formula,
+              .~Stereo(~.,coef=.taper.coef,m=.taper.center), environment(), 
+              from.new=TRUE),
+             statnet.common::nonsimp_update.formula(formula,
+              .~Taper(~.,coef=.taper.coef,m=.taper.center), environment(), 
+              from.new=TRUE) 
+  )
   env <- new.env(parent=environment(formula))
   env$.taper.center <- ostats
   env$.taper.coef <- coef
@@ -58,7 +73,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL,
   fit$tapering.centers <- ostats
   fit$tapering.coef <- coef
   fit$orig.formula <- formula
-  class(fit) <- c("tapered.ergm",class(fit))
+  class(fit) <- c("tapered.ergm",family,class(fit))
   
   fit
 }
