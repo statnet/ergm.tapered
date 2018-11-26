@@ -16,7 +16,8 @@ Depends:
     ergm (>= 4.0),
     network
 Imports:
-    statnet.common (>= 4.1)
+    statnet.common (>= 4.1),
+    MASS
 License: GPL-3
 Roxygen: list(markdown = TRUE)
 Encoding: UTF-8

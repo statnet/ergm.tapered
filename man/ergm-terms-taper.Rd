@@ -1,8 +1,5 @@
-\name{ergm-terms}
-\alias{ergm-terms}
-\alias{ergm.terms}
-\alias{terms-ergm}
-\alias{terms.ergm}
+\name{ergm-terms-taper}
+\alias{ergm-terms-taper}
 \alias{Taper}
 \alias{InitErgmTerm.Taper}
 \docType{methods}
@@ -14,6 +11,9 @@
   See the \code{\link[ergm]{ergm-terms}} documentation in the
   \code{ergm} package for a complete description of what ERGM terms are
   and how they are used.
+
+  These terms are usually accessed via the {\code{ergm.tapered} function call to mimic {\code{ergm}.
+  
 }
 
 \section{Terms}{

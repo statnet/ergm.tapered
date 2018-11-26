@@ -68,7 +68,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL,
   if(is.null(tapering.centers)){
     hess <- .tapered.hessian(sample, coef)
     fit$hessian <- hess
-    fit$covar <- -solve(hess)
+    fit$covar <- -MASS::ginv(hess)
   }
   fit$tapering.centers <- ostats
   fit$tapering.coef <- coef
@@ -86,7 +86,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL,
   np <-ncol(cv)
   B <- sweep(cv, 2, 2*coef, "*")
   I <- diag(rep(1,np))
-  inv <- solve(B+I)
+  inv <- MASS::ginv(B+I)
   
   #derivative of mean value parameters
   dmu <- inv %*% cv
