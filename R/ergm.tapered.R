@@ -63,12 +63,19 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL,
   # fit ergm
   fit <- ergm(newformula, control=control,...)
   
-  # post processs fit to alter hessian etc
+  names(coef) <- names(ostats)
+  # post processs fit to alter Hessian etc
   sample <- fit$sample[[1]][,1:npar,drop=FALSE]
   if(is.null(tapering.centers)){
     hess <- .tapered.hessian(sample, coef)
-    fit$hessian <- hess
-    fit$covar <- -MASS::ginv(hess)
+    if(is.curved(fit)){
+      curved_m <- ergm_model(formula)
+      curved_m <- .tapered.curved.hessian(hess,fit$coef,curved_m$etamap)
+      fit$hessian[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- curved_m
+    }else{
+      fit$hessian <- hess
+    }
+    fit$covar <- -MASS::ginv(fit$hessian)
   }
   fit$tapering.centers <- ostats
   fit$tapering.coef <- coef
@@ -77,8 +84,6 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL,
   
   fit
 }
-
-
 
 .tapered.hessian <- function(sample, coef){
   cv <- var(sample)
@@ -99,4 +104,39 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL,
     }
   }
   ddll
+}
+
+.tapered.curved.hessian <- function(hess,theta,etamap){
+  eta <- rep(0,etamap$etalength)
+  ec <- etamap$canonical
+  eta[ec[ec>0]] <- theta[ec>0]
+  nstats <- sum(ec>0) + length(etamap$curved)
+
+  if(length(etamap$curved)>0) {
+    ch <- matrix(0, nrow=length(eta), ncol=nstats)
+    namesch <- rep("", nstats)
+    icurved <- 0
+    istat <- 0
+    for(i in 1:nstats) {
+      istat <- istat + 1
+      if(ec[istat] > 0){
+       ch[istat,i] <- 1
+       namesch[i] <- names(theta)[istat]
+      }else{
+       icurved <- icurved + 1
+       cm <- etamap$curved[[icurved]]
+       ch[cm$to,i] <- cm$map(theta[cm$from],length(cm$to),cm$cov)
+#      (un)scale by linear coefficient
+       ch[cm$to,i] <- ch[cm$to,i] / theta[cm$from][1]
+       namesch[i] <- names(theta)[istat]
+       istat <- istat + length(cm$from) - 1
+      }
+    }
+    ch <- t(ch) %*% hess %*% ch
+    colnames(ch) <- namesch
+    rownames(ch) <- namesch
+  }else{
+    ch <- hess
+  }
+  ch
 }

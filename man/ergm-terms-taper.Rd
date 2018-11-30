@@ -12,7 +12,7 @@
   \code{ergm} package for a complete description of what ERGM terms are
   and how they are used.
 
-  These terms are usually accessed via the {\code{ergm.tapered} function call to mimic {\code{ergm}.
+  These terms are usually accessed via the \code{ergm.tapered} function call to mimic \code{ergm}.
   
 }
 

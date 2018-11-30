@@ -24,7 +24,8 @@ gof.tapered.ergm <- function(object, ...){
   # do some formula magic
 # .taper.coef <- object$tapering.coef
 # .taper.center <- object$tapering.centers
-  env <- new.env(parent=environment(object))
+# env <- new.env(parent=environment(object))
+  env <- new.env(parent=emptyenv())
   env$.taper.center <- object$tapering.centers
   env$.taper.coef <- object$tapering.coef
   environment(object) <- env
