@@ -42,12 +42,11 @@ InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
     cbind(ergm.etagrad(x, m$etamap), 0)
   }
 
+  cnt <- c(paste0('Taper(',param_names(m, canonical=TRUE),",",beta,')'), "Taper_Penalty")
+
   params <- rep(list(NULL), nparam(m))
   names(params) <- param_names(m, canonical=FALSE)
 
-  cnt <- c(paste0('Taper(',param_names(m, canonical=TRUE),",",beta,')'), "Taper_Penalty")
-  #print(beta)
-  #print(nws)
   list(name="taper_term", coef.names = cnt,
        inputs=c(beta, inputs, gs0-nws), # Note: what gets passed is the difference between the empty network and the observed network.
        dependence=TRUE, emptynwstats = c(gs0, sum((gs0-nws)^2*beta)),
