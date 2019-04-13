@@ -19,10 +19,12 @@
 #' summary(fit)
 #' }
 #' @export
-ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL, 
+ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL, target.stats=NULL,
 			 family="taper",
                          control = control.ergm(MCMLE.termination="Hotelling"), ...){
   
+  if(is.null(tapering.centers)) tapering.centers <- target.stats
+
   if(is.null(tapering.centers))
     ostats <- summary(formula)
   else
@@ -43,27 +45,42 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL,
       }}
   )
   npar <- length(ostats)
+  names(coef) <- names(ostats)
   
   # do some formula magic
 
-  newformula <- switch(family,
+  if(is.null(target.stats)){
+   newformula <- switch(family,
     "stereo"=statnet.common::nonsimp_update.formula(formula,
               .~Stereo(~.,coef=.taper.coef,m=.taper.center), environment(), 
               from.new=TRUE),
              statnet.common::nonsimp_update.formula(formula,
               .~Taper(~.,coef=.taper.coef,m=.taper.center), environment(), 
               from.new=TRUE) 
-  )
+   )
+  }else{
+   newformula <- switch(family,
+    "stereo"=statnet.common::nonsimp_update.formula(formula,
+              .~Stereo(~.,coef=.taper.coef,m=.taper.center), environment(), 
+              from.new=TRUE),
+             statnet.common::nonsimp_update.formula(formula,
+              .~. + offset(Var(~.,coef=.taper.coef,m=.taper.center)), environment(), 
+              from.new=TRUE) 
+   )
+  }
   env <- new.env(parent=environment(formula))
   env$.taper.center <- ostats
   env$.taper.coef <- coef
   environment(newformula) <- env
   
-  
   # fit ergm
-  fit <- ergm(newformula, control=control,...)
+  if(is.null(target.stats)){
+    fit <- ergm(newformula, control=control, ...)
+  }else{
+    fit <- ergm(newformula, control=control, target.stats=ostats, offset.coef=coef, ...)
+  }
   
-  names(coef) <- names(ostats)
+  
   # post processs fit to alter Hessian etc
   sample <- fit$sample[[1]][,1:npar,drop=FALSE]
   if(is.null(tapering.centers)){

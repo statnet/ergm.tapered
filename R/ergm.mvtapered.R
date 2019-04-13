@@ -29,7 +29,7 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
   if(is.character(taper.terms)){
    taper.terms <- switch(taper.terms,
     "dependent"={
-     !sapply(m$terms, function(term) is.null(term$dependence) || term$dependence)
+     sapply(m$terms, function(term) is.null(term$dependence) || term$dependence)
     },
      rep(TRUE,length(m$terms))
    )
