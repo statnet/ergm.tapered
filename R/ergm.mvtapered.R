@@ -39,7 +39,8 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
 # }
 
   control$SAN.maxit <- 0
-  control$MCMLE.termination <- "Hotelling"
+# control$MCMLE.termination <- "Hotelling"
+  if(control$MCMLE.termination == "Hotelling") control$MCMLE.termination <- "confidence"
 
   if(is.null(tapering.centers))
     ostats <- summary(formula)

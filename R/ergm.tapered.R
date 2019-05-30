@@ -20,9 +20,21 @@
 #' }
 #' @export
 ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL, target.stats=NULL,
-			 family="taper",
-                         control = control.ergm(MCMLE.termination="Hotelling"), ...){
+			 family="taper", taper.terms="dependent",
+                         control = control.ergm(MCMLE.termination="confidence"), ...){
   
+  # Determine the dyadic independence terms
+  nw <- ergm.getnetwork(formula)
+  m<-ergm_model(formula, nw)
+  if(is.character(taper.terms)){
+   taper.terms <- switch(taper.terms,
+    "dependent"={
+     sapply(m$terms, function(term) is.null(term$dependence) || term$dependence)
+    },
+     rep(TRUE,length(m$terms))
+   )
+  }
+
   if(is.null(tapering.centers)) tapering.centers <- target.stats
 
   if(is.null(tapering.centers))
@@ -39,40 +51,51 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL, target.
         beta
       }},
       {if(is.null(beta)){
-        1 / (r^2 * pmax(1,abs(ostats)))
+        1 / (r^2 * pmax(1,abs(ostats[taper.terms])))
       }else{
         1 / beta^2
       }}
   )
   npar <- length(ostats)
-  names(coef) <- names(ostats)
+  names(coef) <- names(ostats)[taper.terms]
   
+  terms <- list_rhs.formula(formula)
+  terms[!taper.terms] <- NULL
+  attr(terms,"sign") <- attr(terms,"sign")[taper.terms]
+  taper_formula=append_rhs.formula(~.,terms)
+  taper_formula <- switch(family,
+    "stereo"=statnet.common::nonsimp_update.formula(taper_formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
+              environment(), from.new=TRUE), 
+             statnet.common::nonsimp_update.formula(taper_formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
+              environment(), from.new=TRUE) 
+	     )
+# taper_formula=statnet.common::nonsimp_update.formula(taper_formula,.~Taper(~.,coef=.taper.coef,m=.taper.center))
+
+  trimmed_formula <- statnet.common::filter_rhs.formula(formula, function(x){
+   ans <- FALSE
+   if(is.call(x) ){
+	  for(i in seq_along(terms)){
+	   if(length(x)==length(terms[[i]])){
+	     ans <- !ans & x==terms[[i]]
+	   }
+	  }
+   }
+   !ans
+  })
   # do some formula magic
 
   if(is.null(target.stats)){
-   newformula <- switch(family,
-    "stereo"=statnet.common::nonsimp_update.formula(formula,
-              .~Stereo(~.,coef=.taper.coef,m=.taper.center), environment(), 
-              from.new=TRUE),
-             statnet.common::nonsimp_update.formula(formula,
-              .~Taper(~.,coef=.taper.coef,m=.taper.center), environment(), 
-              from.new=TRUE) 
-   )
+   newformula <- append_rhs.formula(trimmed_formula,taper_formula, environment()) 
   }else{
-   newformula <- switch(family,
-    "stereo"=statnet.common::nonsimp_update.formula(formula,
-              .~Stereo(~.,coef=.taper.coef,m=.taper.center), environment(), 
-              from.new=TRUE),
-             statnet.common::nonsimp_update.formula(formula,
-              .~. + offset(Var(~.,coef=.taper.coef,m=.taper.center)), environment(), 
-              from.new=TRUE) 
-   )
+   newformula <- append_rhs.formula(trimmed_formula,taper_formula, environment()) 
   }
   env <- new.env(parent=environment(formula))
-  env$.taper.center <- ostats
+  env$.taper.center <- ostats[taper.terms]
   env$.taper.coef <- coef
   environment(newformula) <- env
   
+  if(control$MCMLE.termination == "Hotelling") control$MCMLE.termination <- "confidence"
+
   # fit ergm
   if(is.null(target.stats)){
     fit <- ergm(newformula, control=control, ...)
@@ -94,7 +117,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tapering.centers=NULL, target.
     }
     fit$covar <- -MASS::ginv(fit$hessian)
   }
-  fit$tapering.centers <- ostats
+  fit$tapering.centers <- ostats[taper.terms]
   fit$tapering.coef <- coef
   fit$orig.formula <- formula
   class(fit) <- c("tapered.ergm",family,class(fit))
