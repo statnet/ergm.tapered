@@ -4,16 +4,19 @@
 \alias{ergm.tapered}
 \title{Fits a Tapered ERGM}
 \usage{
-ergm.tapered(formula, r = 2, beta = NULL, tapering.centers = NULL,
-  family = "taper", control = control.ergm(MCMLE.termination =
-  "Hotelling"), ...)
+ergm.tapered(formula, r = 2, beta = NULL, tau = NULL,
+  tapering.centers = NULL, target.stats = NULL, family = "taper",
+  taper.terms = "dependent", control = control.ergm(MCMLE.termination =
+  "confidence"), ...)
 }
 \arguments{
 \item{formula}{An ergm formula to fit}
 
-\item{r}{The scaling factor to use for the hueristic of setting beta equal to r the standard deviation of the observed statistics}
+\item{r}{The scaling factor to use for the hueristic of setting beta equal to r standard deviations of the observed statistics}
 
-\item{beta}{The tapering parameters. If not null, these override the hueristics.}
+\item{beta}{The tapering parameters, expressed as in Fellows and Handcock (2017). If not NULL, these override the hueristics (r).}
+
+\item{tau}{The tapering parameters, expressed as natural parameters. If not NULL, these override the beta and the hueristics (r).}
 
 \item{tapering.centers}{The centers of the tapering terms. If null, these are taken to be the mean value parameters.}
 
