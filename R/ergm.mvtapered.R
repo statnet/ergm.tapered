@@ -3,6 +3,9 @@
 #' @param r The scaling factor to use for the hueristic of setting beta equal to r the standard deviation of the observed statistics
 #' @param beta The tapering parameters. If not null, these override the hueristics.
 #' @param tapering.centers The centers of the tapering terms. If null, these are taken to be the mean value parameters.
+#' @param family The type of tapering used. This should either be the \code{stereo} or \code{taper}, the 
+#' tapering model of Fellows and Hnadcock (2016).
+#' @param taper.terms The type of tapering used. This should either be the \code{stereo} or \code{taper}, the 
 #' @param control An object of class control.ergm. Passed to the ergm function.
 #' @param ... Additional arguments to ergm.
 #' @returns
@@ -26,14 +29,6 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
   # Determine the dyadic independence terms
   nw <- ergm.getnetwork(formula)
   m<-ergm_model(formula, nw)
-  if(is.character(taper.terms)){
-   taper.terms <- switch(taper.terms,
-    "dependent"={
-     sapply(m$terms, function(term) is.null(term$dependence) || term$dependence)
-    },
-     rep(TRUE,length(m$terms))
-   )
-  }
 # if(length(tapering.centers) != length(taper.terms)){
 #  stop("'tapering.centers' is the wrong length.")
 # }
@@ -47,6 +42,24 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
   else
     ostats <- tapering.centers
   
+  # set tapering terms
+  if(is.character(taper.terms) & length(taper.terms)==1){
+   if(taper.terms=="dependent"){
+     taper.terms <- sapply(m$terms, function(term) is.null(term$dependence) || term$dependence)
+   }else{if(taper.terms=="all"){
+     taper.terms <- rep(TRUE,length(m$terms))
+   }else{
+     taper.terms <-  names(ostats) %in% taper.terms 
+   }}
+  }
+  if(inherits(taper.terms,"formula")){
+   taper.terms <- list_rhs.formula(taper.terms)
+   taper.terms <-  names(ostats) %in% taper.terms 
+  }
+  if(is.logical(taper.terms)){
+   if(length(taper.terms)!=length(ostats)){stop("The length of taper.terms must match that of the list of terms.")}
+  }
+
   # set tapering coefficient
   target.stats <- switch(family,
     "stereo"={

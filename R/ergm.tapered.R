@@ -4,6 +4,19 @@
 #' @param beta The tapering parameters, expressed as in Fellows and Handcock (2017). If not NULL, these override the hueristics (r).
 #' @param tau The tapering parameters, expressed as natural parameters. If not NULL, these override the beta and the hueristics (r).
 #' @param tapering.centers The centers of the tapering terms. If null, these are taken to be the mean value parameters.
+#' @param target.stats {vector of "observed network statistics,"
+#' if these statistics are for some reason different than the 
+#' actual statistics of the network on the left-hand side of
+#' \code{formula}.
+#' Equivalently, this vector is the mean-value parameter values for the
+#' model.  If this is given, the algorithm finds the natural
+#' parameter values corresponding to these mean-value parameters.
+#' If \code{NULL}, the mean-value parameters used are the observed
+#' statistics of the network in the formula.
+#' }
+#' @param family The type of tapering used. This should either be the \code{stereo} or \code{taper}, the 
+#' tapering model of Fellows and Hnadcock (2016).
+#' @param taper.terms The type of tapering used. This should either be the \code{stereo} or \code{taper}, the 
 #' @param control An object of class control.ergm. Passed to the ergm function.
 #' @param ... Additional arguments to ergm.
 #' @returns
@@ -27,14 +40,6 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   # Determine the dyadic independence terms
   nw <- ergm.getnetwork(formula)
   m<-ergm_model(formula, nw)
-  if(is.character(taper.terms)){
-   taper.terms <- switch(taper.terms,
-    "dependent"={
-     sapply(m$terms, function(term) is.null(term$dependence) || term$dependence)
-    },
-     rep(TRUE,length(m$terms))
-   )
-  }
 
   if(is.null(tapering.centers)) tapering.centers <- target.stats
 
@@ -43,6 +48,24 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   else
     ostats <- tapering.centers
   
+  # set tapering terms
+  if(is.character(taper.terms) & length(taper.terms)==1){
+   if(taper.terms=="dependent"){
+     taper.terms <- sapply(m$terms, function(term) is.null(term$dependence) || term$dependence)
+   }else{if(taper.terms=="all"){
+     taper.terms <- rep(TRUE,length(m$terms))
+   }else{
+     taper.terms <-  names(ostats) %in% taper.terms 
+   }}
+  }
+  if(inherits(taper.terms,"formula")){
+   taper.terms <- list_rhs.formula(taper.terms)
+   taper.terms <-  names(ostats) %in% taper.terms 
+  }
+  if(is.logical(taper.terms)){
+   if(length(taper.terms)!=length(ostats)){stop("The length of taper.terms must match that of the list of terms.")}
+  }
+
   # set tapering coefficient
   tau <- switch(family,
     "stereo"={
@@ -70,6 +93,8 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     terms[!taper.terms] <- NULL
     attr(terms,"sign") <- attr(terms,"sign")[taper.terms]
     taper_formula=append_rhs.formula(~.,terms)
+#   taper_formula=filter_rhs.formula(formula, function(term,t.terms){(as.character(term)[1] %in% t.terms)},
+#                                    names(ostats)[taper.terms])
     taper_formula <- switch(family,
       "stereo"=statnet.common::nonsimp_update.formula(taper_formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
                 environment(), from.new=TRUE), 
@@ -92,7 +117,9 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
 #   }
 #   !ans
 #   }, terms)
-   trimmed_formula <- filter_rhs.formula(formula, `!=`, terms)
+#  trimmed_formula <- filter_rhs.formula(formula, `!=`, terms)
+   trimmed_formula=filter_rhs.formula(formula, function(term,t.terms){!(as.character(term)[1] %in% t.terms)},
+                                     names(ostats)[taper.terms])
 
    newformula <- append_rhs.formula(trimmed_formula,taper_formula, environment()) 
   }else{
