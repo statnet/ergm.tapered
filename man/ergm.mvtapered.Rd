@@ -13,13 +13,26 @@ ergm.mvtapered(formula, r = 2, mv = NULL, tapering.centers = NULL,
 
 \item{r}{The scaling factor to use for the hueristic of setting beta equal to r the standard deviation of the observed statistics}
 
+\item{mv}{{vector of mean-value parameter values
+if these values are for some reason different than the
+actual statistics of the network on the left-hand side of
+\code{formula}.
+If this is given, the algorithm finds the natural
+parameter values corresponding to these mean-value parameters.
+If \code{NULL}, the mean-value parameters used are the observed
+statistics of the network in the formula.
+}}
+
 \item{tapering.centers}{The centers of the tapering terms. If null, these are taken to be the mean value parameters.}
+
+\item{family}{The type of tapering used. This should either be the \code{stereo} or \code{taper}, the
+tapering model of Fellows and Hnadcock (2016).}
+
+\item{taper.terms}{The type of tapering used. This should either be the \code{stereo} or \code{taper}, the}
 
 \item{control}{An object of class control.ergm. Passed to the ergm function.}
 
 \item{...}{Additional arguments to ergm.}
-
-\item{beta}{The tapering parameters. If not null, these override the hueristics.}
 }
 \description{
 Fits a Mean-Valued Tapered ERGM

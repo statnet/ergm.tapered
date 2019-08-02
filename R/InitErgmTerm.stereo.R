@@ -11,7 +11,7 @@ InitErgmTerm.Stereo <- function(nw, arglist, response=NULL, ...){
   if(length(f)==2) f <- statnet.common::nonsimp_update.formula(f, nw~.)
   else nw <- ergm.getnetwork(f)
 
-  m <- ergm::ergm_getmodel(f, nw, ...)
+  m <- ergm::ergm_model(f, nw, ...)
   NVL(nws) <- summary(m)
 
   if(!is.null(beta)){ stereo.mult <- beta }else{ stereo.mult <- 1 }

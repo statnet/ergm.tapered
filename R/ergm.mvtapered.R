@@ -1,7 +1,15 @@
 #' Fits a Mean-Valued Tapered ERGM
 #' @param formula An ergm formula to fit
 #' @param r The scaling factor to use for the hueristic of setting beta equal to r the standard deviation of the observed statistics
-#' @param beta The tapering parameters. If not null, these override the hueristics.
+#' @param mv {vector of mean-value parameter values
+#' if these values are for some reason different than the 
+#' actual statistics of the network on the left-hand side of
+#' \code{formula}.
+#' If this is given, the algorithm finds the natural
+#' parameter values corresponding to these mean-value parameters.
+#' If \code{NULL}, the mean-value parameters used are the observed
+#' statistics of the network in the formula.
+#' }
 #' @param tapering.centers The centers of the tapering terms. If null, these are taken to be the mean value parameters.
 #' @param family The type of tapering used. This should either be the \code{stereo} or \code{taper}, the 
 #' tapering model of Fellows and Hnadcock (2016).

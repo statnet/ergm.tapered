@@ -20,6 +20,22 @@ ergm.tapered(formula, r = 2, beta = NULL, tau = NULL,
 
 \item{tapering.centers}{The centers of the tapering terms. If null, these are taken to be the mean value parameters.}
 
+\item{target.stats}{{vector of "observed network statistics,"
+if these statistics are for some reason different than the
+actual statistics of the network on the left-hand side of
+\code{formula}.
+Equivalently, this vector is the mean-value parameter values for the
+model.  If this is given, the algorithm finds the natural
+parameter values corresponding to these mean-value parameters.
+If \code{NULL}, the mean-value parameters used are the observed
+statistics of the network in the formula.
+}}
+
+\item{family}{The type of tapering used. This should either be the \code{stereo} or \code{taper}, the
+tapering model of Fellows and Hnadcock (2016).}
+
+\item{taper.terms}{The type of tapering used. This should either be the \code{stereo} or \code{taper}, the}
+
 \item{control}{An object of class control.ergm. Passed to the ergm function.}
 
 \item{...}{Additional arguments to ergm.}
