@@ -105,8 +105,6 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
              statnet.common::nonsimp_update.formula(taper_formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
               environment(), from.new=TRUE) 
       )
-# trimmed_formula=filter_rhs.formula(formula, function(term,t.terms){print(length(term));print(term);out <- FALSE;for(i in seq_along(t.terms)){out <- out | (paste(term,collapse="") == paste(taper.terms[[i]],collapse=""))};print(out);out},
-#                                    taper.terms)
 
   if(length(list_rhs.formula(formula))==length(taper.terms)){
     newformula <- switch(family,
@@ -126,14 +124,15 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   env$.taper.coef <- tau
   environment(newformula) <- env
 
+  message(sprintf("The tapering formula is:\n %s", paste(deparse(newformula), sep="\n", collapse = "\n")))
   message("The (natural) tapering parameters are:")
   for(i in seq_along(tau)){
     message(sprintf(" %s : %f",names(tau)[i],tau[i]))
   }
+  message("\n")
   
   if(control$MCMLE.termination == "Hotelling") control$MCMLE.termination <- "confidence"
 
-  print(newformula)
   # fit ergm
   if(is.null(target.stats)){
     fit <- ergm(newformula, control=control, ...)

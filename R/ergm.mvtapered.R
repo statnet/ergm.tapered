@@ -75,6 +75,7 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
   }
   taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms))
 
+  if(is.null(mv)){mv <- 1}
   # set tapering coefficient
   target.stats <- switch(family,
     "stereo"={
@@ -91,6 +92,7 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
   )
   npar <- length(ostats)
   coef <- rep(1,length(ostats))
+  names(coef) <- names(ostats)
   
   # do some formula magic
 
@@ -105,21 +107,22 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
   newformula <- append_rhs.formula(formula, taper_formula)
   env <- new.env(parent=environment(formula))
   env$.taper.center <- taper.stats
-  env$.taper.coef <- coef[taper.terms]
+  env$.taper.coef <- coef[match(names(taper.stats),names(ostats))]
   environment(newformula) <- env
   
 # target.stats=c(ostats,1*ostats)
   names(target.stats) <- names(summary(newformula))
   
+  message(sprintf("The tapering formula is:\n %s", paste(deparse(newformula), sep="\n", collapse = "\n")))
   message("The (mean value) tapering parameters are:")
-  for(i in seq_along(tau)){
+  for(i in seq_along(target.stats)){
     message(sprintf(" %s : %f",names(target.stats)[i],target.stats[i]))
   }
+  message("\n")
   
   # fit ergm
   fit <- ergm(newformula, target.stats=target.stats, control=control,...)
   
-  names(coef) <- names(ostats)
 # # post processs fit to alter Hessian etc
 # sample <- fit$sample[[1]][,1:npar,drop=FALSE]
 # if(is.null(tapering.centers)){
@@ -134,7 +137,7 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
 #   fit$covar <- -MASS::ginv(fit$hessian)
 # }
   fit$tapering.centers <- taper.stats
-  fit$tapering.coef <- coef[taper.terms]
+  fit$tapering.coef <- coef[match(names(taper.stats),names(ostats))]
   fit$orig.formula <- formula
   class(fit) <- c("tapered.ergm",family,class(fit))
   
