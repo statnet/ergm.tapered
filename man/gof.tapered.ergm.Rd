@@ -2,25 +2,41 @@
 % Please edit documentation in R/gof.ergm.tapered.R
 \name{gof.tapered.ergm}
 \alias{gof.tapered.ergm}
-\title{Fits a Tapered ERGM}
+\title{Conduct Goodness-of-Fit Diagnostics on a Tapered Exponential Family Random Graph
+Model}
 \usage{
 \method{gof}{tapered.ergm}(object, ...)
 }
 \arguments{
-\item{...}{Additional arguments to ergm.}
+\item{object}{Either a formula or an \code{tapered.ergm} object.
+See documentation for \code{\link{ergm.tapered}}.
+An object of class c('tapered.ergm','ergm') contains the fit model. In addition to all of the ergm items,
+this object contains tapering.centers, tapering.coef and orig.formula. tapering.centers are the centers for the tapering term.
+tapering.coef are the tapering coefficients = 1/ beta^2. orig.formula is the formula passed into ergm.tapered.}
 
-\item{formula}{An ergm formula to fit}
-
-\item{r}{The scaling factor to use for the hueristic of setting beta equal to r the standard deviation of the observed statistics}
-
-\item{beta}{The tapering parameters. If not null, these override the hueristics.}
-
-\item{tapering.centers}{The centers of the tapering terms. If null, these are taken to be the mean value parameters.}
-
-\item{control}{An object of class control.ergm. Passed to the ergm function.}
+\item{\dots}{Additional arguments, to be passed to lower-level functions.
+These are the same as for \code{\link{gof.ergm}} and that documentation should be consulted.}
+}
+\value{
+\code{\link{gof}}, \code{\link{gof.ergm}}, and
+\code{\link{gof.tapered.ergm}} return an object of class \code{tapered.ergm.gof}, which inherits from class \code{gof}.  This
+is a list of the tables of statistics and \eqn{p}-values.  This is typically
+plotted using \code{\link{plot.gof}}.
 }
 \description{
-Fits a Tapered ERGM
+\code{\link{gof}} calculates \eqn{p}-values for geodesic distance, degree,
+and reachability summaries to diagnose the goodness-of-fit of tapered exponential
+family random graph models.  See \code{\link{ergm.tapered}} for more information on
+these models.
+}
+\details{
+A sample of graphs is randomly drawn from the specified model.  The first
+argument is typically the output of a call to \code{\link{ergm}} and the
+model used for that call is the one fit.
+
+For \code{GOF = ~model}, the model's observed sufficient statistics are
+plotted as quantiles of the simulated sample. In a good fit, the observed
+statistics should be near the sample median (0.5).
 }
 \examples{
 \dontrun{
@@ -32,3 +48,7 @@ summary(fit)
 \references{
 Fellows, I and Handcock, MS (2017). Removing Phase Transitions from Gibbs Measures. Proceedings of Machine Learning Research, 54:289-297.
 }
+\seealso{
+\code{\link[=ergm]{ergm()}}, \code{\link[=network]{network()}}, \code{\link[=simulate.ergm]{simulate.ergm()}}, \code{\link[=summary.ergm]{summary.ergm()}}, \code{\link[=gof.ergm]{gof.ergm()}}
+}
+\keyword{models}

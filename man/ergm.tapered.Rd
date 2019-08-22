@@ -32,9 +32,11 @@ statistics of the network in the formula.
 }}
 
 \item{family}{The type of tapering used. This should either be the \code{stereo} or \code{taper}, the
-tapering model of Fellows and Hnadcock (2016).}
+tapering model of Fellows and Handcock (2016).}
 
-\item{taper.terms}{The type of tapering used. This should either be the \code{stereo} or \code{taper}, the}
+\item{taper.terms}{Specification of the tapering used. If the character variable "dependence" then all the dependent
+terms are tapered. If the character variable "all" then all terms are tapered.
+It can also be the RHS of a formula giving the terms to be tapered.}
 
 \item{control}{An object of class control.ergm. Passed to the ergm function.}
 

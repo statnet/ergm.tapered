@@ -1,8 +1,8 @@
 Package: ergm.tapered
 Type: Package
 Title: Tapered Exponential-Family Models for Networks
-Version: 1.0-5
-Date: 2018-02-22
+Version: 1.0-6
+Date: 2019-08-22
 Authors@R: c(
 	  person("Mark S.", "Handcock", role=c("aut","cre"), email="handcock@stat.ucla.edu"),
 	  person("Pavel N.", "Krivitsky", role=c("aut"), email="pavel@uow.edu.au"),
@@ -10,7 +10,6 @@ Authors@R: c(
 Description: A set of terms and functions implementing Tapered exponential-family random graph models (ERGMs). Tapered ERGMs are a modification of ERGMs that reduce the effects of phase transitions,
     and with properly chosen hyper-parameters, provably removes all multiphase
     behavior.
-BugReports: https://github.com/statnet/ergm.tapered-private/issues
 LinkingTo: ergm
 Depends:
     ergm (>= 4.0),
