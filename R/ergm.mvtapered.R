@@ -12,8 +12,10 @@
 #' }
 #' @param tapering.centers The centers of the tapering terms. If null, these are taken to be the mean value parameters.
 #' @param family The type of tapering used. This should either be the \code{stereo} or \code{taper}, the 
-#' tapering model of Fellows and Hnadcock (2016).
-#' @param taper.terms The type of tapering used. This should either be the \code{stereo} or \code{taper}, the 
+#' tapering model of Fellows and Handcock (2016).
+#' @param taper.terms Specification of the tapering used. If the character variable "dependence" then all the dependent
+#' terms are tapered. If the character variable "all" then all terms are tapered.
+#' It can also be the RHS of a formula giving the terms to be tapered. 
 #' @param control An object of class control.ergm. Passed to the ergm function.
 #' @param ... Additional arguments to ergm.
 #' @returns
@@ -53,20 +55,25 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
   # set tapering terms
   if(is.character(taper.terms) & length(taper.terms)==1){
    if(taper.terms=="dependent"){
-     taper.terms <- sapply(m$terms, function(term) is.null(term$dependence) || term$dependence)
+     a <- sapply(m$terms, function(term){is.null(term$dependence) || term$dependence})
+     taper.terms <- list_rhs.formula(formula)
+     for(i in seq_along(taper.terms)){if(!a[i]){taper.terms[[i]] <- NULL}}
+     taper_formula <- append_rhs.formula(~.,taper.terms)
    }else{if(taper.terms=="all"){
-     taper.terms <- rep(TRUE,length(m$terms))
+     taper.terms <- list_rhs.formula(formula)
+     taper_formula <- append_rhs.formula(~.,taper.terms)
    }else{
-     taper.terms <-  names(ostats) %in% taper.terms 
+    if(!inherits(taper.terms,"formula")){
+      stop('taper.terms must be "dependent", "all" or a formula of terms.')
+    }
+    taper.terms <- list_rhs.formula(taper.terms)
+    taper_formula <- append_rhs.formula(~.,taper.terms)
    }}
+  }else{
+    taper_formula <- taper.terms
+    taper.terms <- list_rhs.formula(taper.terms)
   }
-  if(inherits(taper.terms,"formula")){
-   taper.terms <- list_rhs.formula(taper.terms)
-   taper.terms <-  names(ostats) %in% taper.terms 
-  }
-  if(is.logical(taper.terms)){
-   if(length(taper.terms)!=length(ostats)){stop("The length of taper.terms must match that of the list of terms.")}
-  }
+  taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms))
 
   # set tapering coefficient
   target.stats <- switch(family,
@@ -77,7 +84,7 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
         beta
       }},
       {if(length(mv)==1 & is.numeric(mv)){
-        c(ostats,mv*abs(ostats[taper.terms]))
+        c(ostats,mv*abs(taper.stats))
       }else{
         c(ostats, mv)
       }}
@@ -85,11 +92,6 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
   npar <- length(ostats)
   coef <- rep(1,length(ostats))
   
-  terms <- list_rhs.formula(formula)
-  terms[!taper.terms] <- NULL
-  attr(terms,"sign") <- attr(terms,"sign")[taper.terms]
-  taper_formula=append_rhs.formula(~.,terms)
-
   # do some formula magic
 
   taper_formula <- switch(family,
@@ -102,12 +104,17 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
   )
   newformula <- append_rhs.formula(formula, taper_formula)
   env <- new.env(parent=environment(formula))
-  env$.taper.center <- ostats[taper.terms]
+  env$.taper.center <- taper.stats
   env$.taper.coef <- coef[taper.terms]
   environment(newformula) <- env
   
 # target.stats=c(ostats,1*ostats)
   names(target.stats) <- names(summary(newformula))
+  
+  message("The (mean value) tapering parameters are:")
+  for(i in seq_along(tau)){
+    message(sprintf(" %s : %f",names(target.stats)[i],target.stats[i]))
+  }
   
   # fit ergm
   fit <- ergm(newformula, target.stats=target.stats, control=control,...)
@@ -126,7 +133,7 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
 #   }
 #   fit$covar <- -MASS::ginv(fit$hessian)
 # }
-  fit$tapering.centers <- ostats[taper.terms]
+  fit$tapering.centers <- taper.stats
   fit$tapering.coef <- coef[taper.terms]
   fit$orig.formula <- formula
   class(fit) <- c("tapered.ergm",family,class(fit))
