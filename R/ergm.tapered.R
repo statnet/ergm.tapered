@@ -55,7 +55,9 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
    if(taper.terms=="dependent"){
      a <- sapply(m$terms, function(term){is.null(term$dependence) || term$dependence})
      taper.terms <- list_rhs.formula(formula)
-     for(i in seq_along(taper.terms)){if(!a[i]){taper.terms[[i]] <- NULL}}
+     tmp <- taper.terms
+     taper.terms <- NULL
+     for(i in seq_along(tmp)){if(a[i]){taper.terms <- c(taper.terms,tmp[[i]])}}
      taper_formula <- append_rhs.formula(~.,taper.terms)
    }else{if(taper.terms=="all"){
      taper.terms <- list_rhs.formula(formula)
@@ -154,7 +156,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     }
     fit$covar <- -MASS::ginv(fit$hessian)
   }
-  fit$tapering.centers <- ostats[taper.terms]
+  fit$tapering.centers <- taper.stats
   fit$tapering.coef <- tau
   fit$orig.formula <- formula
   class(fit) <- c("tapered.ergm",family,class(fit))

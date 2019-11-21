@@ -22,7 +22,8 @@ I_CHANGESTAT_FN(i_taper_term){
       ChangeStats(1, &tail, &head, nw, m);
       for(unsigned int k=0; k<m->n_stats; k++)
 	storage->stats[k] += m->workspace[k];
-      UPDATE_STORAGE(tail, head, nw, m, NULL);
+      Rboolean edgeflag = IS_OUTEDGE((tail), (head), (nw));
+      UPDATE_STORAGE(tail, head, nw, m, NULL, edgeflag);
       ToggleEdge(tail, head, nw);
     });
   
@@ -55,7 +56,7 @@ U_CHANGESTAT_FN(u_taper_term){
   for(unsigned int k=0; k<m->n_stats; k++)
     storage->stats[k] += m->workspace[k];
 
-  UPDATE_STORAGE(tail, head, nwp, m, NULL);
+  UPDATE_STORAGE(tail, head, nwp, m, NULL, edgeflag);
 }
 
 F_CHANGESTAT_FN(f_taper_term){
