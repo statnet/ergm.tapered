@@ -146,7 +146,11 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   # post processs fit to alter Hessian etc
   sample <- fit$sample[[1]][,1:npar,drop=FALSE]
   if(is.null(tapering.centers)){
-    hess <- .tapered.hessian(sample, tau)
+    hesstau <- ostats - ostats
+#   hesstau[names(ostats) %in% names(tau)] <- tau
+    nm <- match(names(ostats),names(tau))
+    hesstau[seq_along(hesstau)[!is.na(nm)]] <- tau[nm[!is.na(nm)]]
+    hess <- .tapered.hessian(sample, hesstau)
     if(is.curved(fit)){
       curved_m <- ergm_model(formula)
       curved_m <- .tapered.curved.hessian(hess,fit$coef,curved_m$etamap)
@@ -156,7 +160,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     }
     fit$covar <- -MASS::ginv(fit$hessian)
   }
-  fit$tapering.centers <- taper.stats
+  fit$tapering.centers <- ostats[as.character(unlist(taper.terms))]
   fit$tapering.coef <- tau
   fit$orig.formula <- formula
   class(fit) <- c("tapered.ergm",family,class(fit))
