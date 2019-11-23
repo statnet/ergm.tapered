@@ -3,7 +3,7 @@
 S3method(gof,tapered.ergm)
 export(ergm.mvtapered)
 export(ergm.tapered)
-import(ergm)
+import(ergd)
 import(network)
 import(statnet.common)
 importFrom(stats,as.formula)

@@ -1,6 +1,6 @@
 #' @import ergm statnet.common network
 InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
-  a <- ergm::check.ErgmTerm(nw, arglist,
+  a <- ergd::check.ErgmTerm(nw, arglist,
                       varnames = c("formula", "coef", "m"),
                       vartypes = c("formula", "numeric", "numeric"),
                       defaultvalues = list(NULL, NULL, NULL),
@@ -11,7 +11,7 @@ InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
   if(length(f)==2) f <- statnet.common::nonsimp_update.formula(f, nw~.)
   else nw <- ergm.getnetwork(f)
 
-  m <- ergm::ergm_model(f, nw,...)
+  m <- ergd::ergm_model(f, nw,...)
   NVL(nws) <- summary(m)
 
   if(!is.null(beta)){ taper.mult <- beta }else{ taper.mult <- 1 }
@@ -29,7 +29,7 @@ InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
           " or 1, but got ",length(taper.mult),".")
   }}
 
-  inputs <- ergm::to_ergm_Cdouble(m)
+  inputs <- ergd::to_ergm_Cdouble(m)
   
   # Should be empty network statistics
   gs0 <- summary(m)

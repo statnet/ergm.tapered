@@ -10,9 +10,9 @@ Authors@R: c(
 Description: A set of terms and functions implementing Tapered exponential-family random graph models (ERGMs). Tapered ERGMs are a modification of ERGMs that reduce the effects of phase transitions,
     and with properly chosen hyper-parameters, provably removes all multiphase
     behavior.
-LinkingTo: ergm
+LinkingTo: ergd
 Depends:
-    ergm (>= 4.0),
+    ergd (>= 4.0),
     network
 Imports:
     statnet.common (>= 4.3),
