@@ -121,7 +121,7 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
   message("\n")
   
   # fit ergm
-  fit <- ergm(newformula, target.stats=target.stats, control=control,...)
+  fit <- ergd(newformula, target.stats=target.stats, control=control,...)
   
 # # post processs fit to alter Hessian etc
 # sample <- fit$sample[[1]][,1:npar,drop=FALSE]

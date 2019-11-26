@@ -49,6 +49,6 @@ summary(fit)
 Fellows, I and Handcock, MS (2017). Removing Phase Transitions from Gibbs Measures. Proceedings of Machine Learning Research, 54:289-297.
 }
 \seealso{
-\code{\link[=ergm]{ergm()}}, \code{\link[=network]{network()}}, \code{\link[=simulate.ergm]{simulate.ergm()}}, \code{\link[=summary.ergm]{summary.ergm()}}, \code{\link[=gof.ergm]{gof.ergm()}}
+\code{\link[=ergm]{ergd()}}, \code{\link[=network]{network()}}, \code{\link[=simulate.ergm]{simulate.ergm()}}, \code{\link[=summary.ergm]{summary.ergm()}}, \code{\link[=gof.ergm]{gof.ergm()}}
 }
 \keyword{models}
