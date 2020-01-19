@@ -1,4 +1,4 @@
-#' @import ergm statnet.common network
+#' @import ergd statnet.common network
 InitErgmTerm.Stereo <- function(nw, arglist, response=NULL, ...){
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("formula", "coef", "m"),

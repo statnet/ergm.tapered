@@ -28,7 +28,7 @@
 #' @examples 
 #' \dontrun{
 #' data(sampson)
-#' fit <- ergm.tapered(samplike ~ edges + triangles())
+#' fit <- ergm.tapered(samplike ~ edges + triangles(), tau=0.1))
 #' summary(fit)
 #' }
 #' @export
@@ -57,7 +57,9 @@ ergm.mvtapered <- function(formula, r=2, mv=NULL, tapering.centers=NULL,
    if(taper.terms=="dependent"){
      a <- sapply(m$terms, function(term){is.null(term$dependence) || term$dependence})
      taper.terms <- list_rhs.formula(formula)
-     for(i in seq_along(taper.terms)){if(!a[i]){taper.terms[[i]] <- NULL}}
+     tmp <- taper.terms
+     taper.terms <- NULL
+     for(i in seq_along(tmp)){if(a[i]){taper.terms <- c(taper.terms,tmp[[i]])}}
      taper_formula <- append_rhs.formula(~.,taper.terms)
    }else{if(taper.terms=="all"){
      taper.terms <- list_rhs.formula(formula)

@@ -1,4 +1,4 @@
-#' @import ergm statnet.common network
+#' @import ergd statnet.common network
 InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
   a <- ergd::check.ErgmTerm(nw, arglist,
                       varnames = c("formula", "coef", "m"),

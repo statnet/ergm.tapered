@@ -25,14 +25,14 @@
 #' \code{\link{gof.tapered.ergm}} return an object of class \code{tapered.ergm.gof}, which inherits from class `gof`.  This
 #' is a list of the tables of statistics and \eqn{p}-values.  This is typically
 #' plotted using \code{\link{plot.gof}}.
-#' @seealso [ergd()], [network()], [simulate.ergm()], [summary.ergm()], [gof.ergm()]
+#' @seealso [ergm()], [network()], [simulate.ergm()], [summary.ergm()], [gof.ergm()]
 #' @keywords models
 #' @references 
 #' Fellows, I and Handcock, MS (2017). Removing Phase Transitions from Gibbs Measures. Proceedings of Machine Learning Research, 54:289-297.
 #' @examples 
 #' \dontrun{
 #' data(sampson)
-#' fit <- ergm.tapered(samplike ~ edges + triangles())
+#' fit <- ergm.tapered(samplike ~ edges + triangles(), tau=0.1))
 #' summary(fit)
 #' }
 #' @export

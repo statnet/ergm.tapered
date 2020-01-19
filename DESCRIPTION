@@ -1,8 +1,8 @@
 Package: ergm.tapered
 Type: Package
 Title: Tapered Exponential-Family Models for Networks
-Version: 1.0-7
-Date: 2019-11-21
+Version: 1.1-0
+Date: 2020-01-19
 Authors@R: c(
 	  person("Mark S.", "Handcock", role=c("aut","cre"), email="handcock@stat.ucla.edu"),
 	  person("Pavel N.", "Krivitsky", role=c("aut"), email="pavel@uow.edu.au"),
@@ -20,4 +20,4 @@ Imports:
 License: GPL-3
 Roxygen: list(markdown = TRUE)
 Encoding: UTF-8
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2

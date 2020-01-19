@@ -4,9 +4,16 @@
 \alias{ergm.mvtapered}
 \title{Fits a Mean-Valued Tapered ERGM}
 \usage{
-ergm.mvtapered(formula, r = 2, mv = NULL, tapering.centers = NULL,
-  family = "taper", taper.terms = "dependent",
-  control = control.ergm(), ...)
+ergm.mvtapered(
+  formula,
+  r = 2,
+  mv = NULL,
+  tapering.centers = NULL,
+  family = "taper",
+  taper.terms = "dependent",
+  control = control.ergm(),
+  ...
+)
 }
 \arguments{
 \item{formula}{An ergm formula to fit}
@@ -35,6 +42,11 @@ It can also be the RHS of a formula giving the terms to be tapered.}
 \item{control}{An object of class control.ergm. Passed to the ergm function.}
 
 \item{...}{Additional arguments to ergm.}
+}
+\value{
+An object of class c('tapered.ergm','ergm') containing the fit model. In addition to all of the ergm items,
+this object contains tapering.centers, tapering.coef and orig.formula. tapering.centers are the centers for the tapering term.
+tapering.coef are the tapering coefficients = 1/ beta^2. orig.formula is the formula passed into ergm.tapered.
 }
 \description{
 Fits a Mean-Valued Tapered ERGM

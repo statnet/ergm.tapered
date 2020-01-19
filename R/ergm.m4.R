@@ -1,8 +1,13 @@
-#' Fits a Tapered ERGM
+#' Fits a Tapered ERGM using kurtosis penalized likelihood
 #' @param formula An ergm formula to fit
-#' @param r The scaling factor to use for the hueristic of setting beta equal to r standard deviations of the observed statistics
-#' @param beta The tapering parameters, expressed as in Fellows and Handcock (2017). If not NULL, these override the hueristics (r).
-#' @param tau The tapering parameters, expressed as natural parameters. If not NULL, these override the beta and the hueristics (r).
+#' @param taper.terms Specification of the tapering used. If the character variable "dependence" then all the dependent
+#' terms are tapered. If the character variable "all" then all terms are tapered.
+#' It can also be the RHS of a formula giving the terms to be tapered. 
+#' @param family The type of tapering used. This should either be the \code{stereo} or \code{taper}, the 
+#' tapering model of Fellows and Handcock (2016).
+#' @param r The (optional) scaling factor to use for the hueristic of setting the initial beta; equal to r standard deviations of the observed statistics. The default is 2.
+#' @param beta The initial tapering parameters, expressed as in Fellows and Handcock (2017). If not NULL, these override the hueristics (r).
+#' @param tau The initial tapering parameters, expressed as natural parameters. If not NULL, these override the beta and the hueristics (r).
 #' @param tapering.centers The centers of the tapering terms. If null, these are taken to be the mean value parameters.
 #' @param target.stats {vector of "observed network statistics,"
 #' if these statistics are for some reason different than the 
@@ -14,11 +19,6 @@
 #' If \code{NULL}, the mean-value parameters used are the observed
 #' statistics of the network in the formula.
 #' }
-#' @param family The type of tapering used. This should either be the \code{stereo} or \code{taper}, the 
-#' tapering model of Fellows and Handcock (2016).
-#' @param taper.terms Specification of the tapering used. If the character variable "dependence" then all the dependent
-#' terms are tapered. If the character variable "all" then all terms are tapered.
-#' It can also be the RHS of a formula giving the terms to be tapered. 
 #' @param control An object of class control.ergm. Passed to the ergm function.
 #' @param ... Additional arguments to ergm.
 #' @returns
@@ -31,12 +31,14 @@
 #' @examples 
 #' \dontrun{
 #' data(sampson)
-#' fit <- ergm.tapered(samplike ~ edges + triangles(), tau=0.1)
+#' fit <- ergm.kurtosis(samplike ~ edges + triangles(), tau=0.1))
 #' summary(fit)
 #' }
 #' @export
-ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NULL, target.stats=NULL,
-			 family="taper", taper.terms="dependent",
+ergm.m4 <- function(formula,
+			 taper.terms="dependent",
+			 family="taper",
+                         r=2, beta=NULL, tau=NULL, tapering.centers=NULL, target.stats=NULL,
                          control = control.ergm(MCMLE.termination="confidence"), ...){
   
   # Determine the dyadic independence terms
@@ -98,13 +100,14 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
         1 / beta^2
       }}else{tau}}
   )
+  tau <- tau*tau
   npar <- length(ostats)
-  names(tau) <- names(taper.stats)
+  names(tau) <- paste0("M4(",names(taper.stats),")")
   
   taper_terms <- switch(family,
     "stereo"=statnet.common::nonsimp_update.formula(taper_formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
               environment(), from.new=TRUE), 
-             statnet.common::nonsimp_update.formula(taper_formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
+             statnet.common::nonsimp_update.formula(taper_formula,.~M4(~.,coef=.taper.coef,m=.taper.center),
               environment(), from.new=TRUE) 
       )
 
@@ -112,14 +115,16 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     newformula <- switch(family,
       "stereo"=statnet.common::nonsimp_update.formula(formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
                 environment(), from.new=TRUE), 
-               statnet.common::nonsimp_update.formula(formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
+               statnet.common::nonsimp_update.formula(formula,.~M4(~.,coef=.taper.coef,m=.taper.center),
                 environment(), from.new=TRUE) 
 	       )
-
+#   newformula <- append_rhs.formula(newformula,taper_terms, environment()) 
   }else{
     trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,t.terms){all(term != taper.terms)}, taper.terms))
-    newformula <- append_rhs.formula(trimmed_formula,taper_terms, environment()) 
+#   newformula <- append_rhs.formula(trimmed_formula,taper_terms, environment()) 
+    newformula <- append_rhs.formula(formula,taper_terms, environment()) 
   }
+  newformula <- append_rhs.formula(formula,taper_terms, environment()) 
 
   env <- new.env(parent=environment(formula))
   env$.taper.center <- taper.stats
@@ -133,7 +138,16 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   }
   message("\n")
   
+  control$MCMLE.metric <- "m4"
   if(control$MCMLE.termination == "Hotelling") control$MCMLE.termination <- "confidence"
+
+  if(is.null(control$init)){
+    fit0 <- c(ergd(formula, control=control, estimate="MPLE")$coef,tau)
+    if(length(tau)==length(fit0)-npar-1){
+     names(fit0)[(npar+1):length(fit0)] <- names(tau)
+    }
+    control$init <- fit0
+  }
 
   # fit ergm
   if(is.null(target.stats)){
@@ -142,89 +156,27 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     fit <- ergd(newformula, control=control, target.stats=ostats, offset.coef=tau, ...)
   }
   
-  
-  # post processs fit to alter Hessian etc
-  sample <- fit$sample[[1]][,1:npar,drop=FALSE]
-  if(is.null(tapering.centers)){
-    hesstau <- ostats - ostats
-#   hesstau[names(ostats) %in% names(tau)] <- tau
-    nm <- match(names(ostats),names(tau))
-    hesstau[seq_along(hesstau)[!is.na(nm)]] <- tau[nm[!is.na(nm)]]
-    hess <- .tapered.hessian(sample, hesstau)
-    if(is.curved(fit)){
-      curved_m <- ergm_model(formula)
-      curved_m <- .tapered.curved.hessian(hess,fit$coef,curved_m$etamap)
-      fit$hessian[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- curved_m
-    }else{
-      fit$hessian <- hess
-    }
+# # post processs fit to alter Hessian etc
+# sample <- fit$sample[[1]][,1:npar,drop=FALSE]
+# if(is.null(tapering.centers)){
+#   hesstau <- ostats - ostats
+##  hesstau[names(ostats) %in% names(tau)] <- tau
+#   nm <- match(names(ostats),names(tau))
+#   hesstau[seq_along(hesstau)[!is.na(nm)]] <- tau[nm[!is.na(nm)]]
+#   hess <- .tapered.hessian(sample, hesstau)
+#   if(is.curved(fit)){
+#     curved_m <- ergm_model(newformula)
+#     curved_m <- .tapered.curved.hessian(hess,fit$coef,curved_m$etamap)
+#     fit$hessian[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- curved_m
+#   }else{
+#     fit$hessian <- hess
+#   }
     fit$covar <- -MASS::ginv(fit$hessian)
-  }
+# }
   fit$tapering.centers <- ostats[as.character(unlist(taper.terms))]
   fit$tapering.coef <- tau
   fit$orig.formula <- formula
   class(fit) <- c("tapered.ergm",family,class(fit))
   
   fit
-}
-
-.tapered.hessian <- function(sample, coef){
-  cv <- var(sample)
-  
-  np <-ncol(cv)
-  B <- sweep(cv, 2, 2*coef, "*")
-  I <- diag(rep(1,np))
-  inv <- MASS::ginv(B-I)
-  
-  #derivative of mean value parameters
-  dmu <- inv %*% cv
-  
-  #second derivative of log likelihoods
-  ddll <- diag(rep(0,np))
-  for(i in 1:np){
-    for(j in 1:np){
-      ddll[i,j] <- -dmu[i,j] - sum(2*coef*dmu[,i]*dmu[,j]) 
-    }
-  }
-  ddll
-}
-
-.tapered.curved.hessian <- function(hess,theta,etamap){
-  eta <- rep(0,etamap$etalength)
-  ec <- etamap$canonical
-  eta[ec[ec>0]] <- theta[ec>0]
-  nstats <- sum(ec>0) + length(etamap$curved)
-
-  if(length(etamap$curved)>0) {
-    ch <- matrix(0, nrow=length(eta), ncol=nstats)
-    namesch <- rep("", nstats)
-    icurved <- 0
-    istat <- 0
-    for(i in 1:nstats) {
-      istat <- istat + 1
-      if(ec[istat] > 0){
-       ch[istat,i] <- 1
-       namesch[i] <- names(theta)[istat]
-      }else{
-       icurved <- icurved + 1
-       cm <- etamap$curved[[icurved]]
-       ch[cm$to,i] <- cm$map(theta[cm$from],length(cm$to),cm$cov)
-#      (un)scale by linear coefficient
-       ch[cm$to,i] <- ch[cm$to,i] / theta[cm$from][1]
-       namesch[i] <- names(theta)[istat]
-       istat <- istat + length(cm$from) - 1
-      }
-    }
-    exterms <- grep("Var(",namesch,fixed=TRUE)
-    if(length(exterms)>0){
-     ch <- ch[-exterms,-exterms]
-     namesch <- namesch[-exterms]
-    }
-    ch <- t(ch) %*% hess %*% ch
-    colnames(ch) <- namesch
-    rownames(ch) <- namesch
-  }else{
-    ch <- hess
-  }
-  ch
 }

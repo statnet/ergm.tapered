@@ -3,7 +3,7 @@
 }
 .onAttach <- function(lib, pkg){
   if("package:ergm" %in% search()){
-    message("Detaching prior version of 'ergm'.")
+    packageStartupMessage("Detaching prior version of 'ergm'.")
     detach("package:ergm", unload=TRUE)
   }
 }
