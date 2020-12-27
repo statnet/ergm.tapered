@@ -1,6 +1,6 @@
 #' @import ergm statnet.common network
 InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
-  a <- ergm::check.ErgmTerm(nw, arglist,
+  a <- check.ErgmTerm(nw, arglist,
                       varnames = c("formula", "coef", "m"),
                       vartypes = c("formula", "numeric", "numeric"),
                       defaultvalues = list(NULL, NULL, NULL),
@@ -8,7 +8,7 @@ InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
   beta <- a$coef
   nws <- a$m
 
-  m <- ergm::ergm_model(a$formula, nw,...)
+  m <- ergm_model(a$formula, nw,...)
   NVL(nws) <- summary(m, nw, response=response)
 
   if(!is.null(beta)){ taper.mult <- beta }else{ taper.mult <- 1 }
