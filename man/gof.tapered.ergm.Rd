@@ -41,7 +41,7 @@ statistics should be near the sample median (0.5).
 \examples{
 \dontrun{
 data(sampson)
-fit <- ergm.tapered(samplike ~ edges + triangles())
+fit <- ergm.tapered(samplike ~ edges + triangles(), tau=0.1))
 summary(fit)
 }
 }

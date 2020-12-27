@@ -141,7 +141,7 @@ ergm.kurtosis <- function(formula,
   if(control$MCMLE.termination == "Hotelling") control$MCMLE.termination <- "confidence"
 
   if(is.null(control$init)){
-    fit0 <- c(ergd(formula, control=control, estimate="MPLE")$coef,log(tau))
+    fit0 <- c(ergm(formula, control=control, estimate="MPLE")$coef,log(tau))
     if(length(tau)==length(fit0)-npar-1){
      names(fit0)[(npar+1):length(fit0)] <- names(tau)
     }
@@ -150,9 +150,9 @@ ergm.kurtosis <- function(formula,
 
   # fit ergm
   if(is.null(target.stats)){
-    fit <- ergd(newformula, control=control, ...)
+    fit <- ergm(newformula, control=control, ...)
   }else{
-    fit <- ergd(newformula, control=control, target.stats=ostats, offset.coef=log(tau), ...)
+    fit <- ergm(newformula, control=control, target.stats=ostats, offset.coef=log(tau), ...)
   }
   
 #  # post processs fit to alter Hessian etc

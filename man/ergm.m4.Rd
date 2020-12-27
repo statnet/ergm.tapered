@@ -61,7 +61,7 @@ Fits a Tapered ERGM using kurtosis penalized likelihood
 \examples{
 \dontrun{
 data(sampson)
-fit <- ergm.kurtosis(samplike ~ edges + triangles())
+fit <- ergm.kurtosis(samplike ~ edges + triangles(), tau=0.1))
 summary(fit)
 }
 }

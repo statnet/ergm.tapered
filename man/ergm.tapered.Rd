@@ -61,7 +61,7 @@ Fits a Tapered ERGM
 \examples{
 \dontrun{
 data(sampson)
-fit <- ergm.tapered(samplike ~ edges + triangles())
+fit <- ergm.tapered(samplike ~ edges + triangles(), tau=0.1)
 summary(fit)
 }
 }

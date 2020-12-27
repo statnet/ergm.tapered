@@ -137,9 +137,9 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
 
   # fit ergm
   if(is.null(target.stats)){
-    fit <- ergd(newformula, control=control, ...)
+    fit <- ergm(newformula, control=control, ...)
   }else{
-    fit <- ergd(newformula, control=control, target.stats=ostats, offset.coef=tau, ...)
+    fit <- ergm(newformula, control=control, target.stats=ostats, offset.coef=tau, ...)
   }
   
   
