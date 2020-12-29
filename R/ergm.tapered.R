@@ -41,12 +41,12 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   
   # Determine the dyadic independence terms
   nw <- ergm.getnetwork(formula)
-  m<-ergm_model(formula, nw)
+  m<-ergm_model(formula, nw, ...)
 
   if(is.null(tapering.centers)) tapering.centers <- target.stats
 
   if(is.null(tapering.centers))
-    ostats <- summary(formula)
+    ostats <- summary(m, nw, ...)
   else
     ostats <- tapering.centers
   
@@ -73,7 +73,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     taper_formula <- taper.terms
     taper.terms <- list_rhs.formula(taper.terms)
   }
-  taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms))
+  taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms), ...)
 
 # if(is.logical(taper.terms)){
 #  if(length(taper.terms)!=length(ostats)){stop("The length of taper.terms must match that of the list of terms.")}

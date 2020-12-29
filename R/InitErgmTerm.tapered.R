@@ -8,7 +8,7 @@ InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
   beta <- a$coef
   nws <- a$m
 
-  m <- ergm_model(a$formula, nw,...)
+  m <- ergm_model(a$formula, nw, response=response, ...)
   NVL(nws) <- summary(m, nw, response=response)
 
   if(!is.null(beta)){ taper.mult <- beta }else{ taper.mult <- 1 }
