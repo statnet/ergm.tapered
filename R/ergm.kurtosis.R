@@ -19,6 +19,18 @@
 #' If \code{NULL}, the mean-value parameters used are the observed
 #' statistics of the network in the formula.
 #' }
+#' @param response {Name of the edge attribute whose value is to be
+#' modeled in the valued ERGM framework. Defaults to \code{NULL} for
+#' simple presence or absence, modeled via a binary ERGM.}
+#' @param reference {A one-sided formula specifying
+#' the reference measure (\eqn{h(y)}) to be used.
+#' See help for \link[=ergm-references]{ERGM reference measures} implemented in the
+#' \strong{\link[=ergm-package]{ergm}} package.}
+#' @param constraints {A formula specifying one or more constraints
+#' on the support of the distribution of the networks being modeled,
+#' using syntax similar to the \code{formula} argument, on the
+#' right-hand side. See \link[=ergm-constraints]{ERGM constraints} 
+#' \code{\link{ergm}} for details.}
 #' @param control An object of class control.ergm. Passed to the ergm function.
 #' @param ... Additional arguments to ergm.
 #' @returns
@@ -31,27 +43,29 @@
 #' @examples 
 #' \dontrun{
 #' data(sampson)
-#' fit <- ergm.kurtosis(samplike ~ edges + triangles(), tau=0.1))
+#' fit <- ergm.kurtosis(samplike ~ edges + triangles())
 #' summary(fit)
 #' }
 #' @export
 ergm.kurtosis <- function(formula,
-			 taper.terms="dependent",
+			 taper.terms="all",
 			 family="taper",
                          r=2, beta=NULL, tau=NULL, tapering.centers=NULL, target.stats=NULL,
-                         control = control.ergm(MCMLE.termination="confidence"), ...){
+                         response=NULL, constraints=~., reference=~Bernoulli,
+                         control = control.ergm(MCMLE.termination="confidence", main.hessian=FALSE), verbose=FALSE, ...){
   
   # Determine the dyadic independence terms
   nw <- ergm.getnetwork(formula)
-  m<-ergm_model(formula, nw)
+  m<-ergm_model(formula, nw, response=response)
 
   if(is.null(tapering.centers)) tapering.centers <- target.stats
 
   if(is.null(tapering.centers))
-    ostats <- summary(formula)
+    ostats <- summary(formula, response=response)
   else
     ostats <- tapering.centers
   
+  otaper.terms <- taper.terms
   # set tapering terms
   if(is.character(taper.terms) & length(taper.terms)==1){
    if(taper.terms=="dependent"){
@@ -75,11 +89,7 @@ ergm.kurtosis <- function(formula,
     taper_formula <- taper.terms
     taper.terms <- list_rhs.formula(taper.terms)
   }
-  taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms))
-
-# if(is.logical(taper.terms)){
-#  if(length(taper.terms)!=length(ostats)){stop("The length of taper.terms must match that of the list of terms.")}
-# }
+  taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms), response=response)
 
   # set tapering coefficient
   tau <- switch(family,
@@ -101,12 +111,31 @@ ergm.kurtosis <- function(formula,
       }}else{tau}}
   )
   npar <- length(ostats)
-  names(tau) <- paste0("Kurt(",names(taper.stats),")")
+  names(tau) <- names(taper.stats)
+
+  if(is.null(control$init)){
+    tcontrol <- control
+    tcontrol$MCMLE.maxit <- 10
+    tcontrol$MCMLE.steplength <- 0.25
+#   tfit <- ergm(formula, 
+#        control = tcontrol, verbose=FALSE, estimate="MPLE", ...)
+#   browser()
+#   tcontrol$init <- tfit$coef*0.5
+    tcontrol.orig <- tcontrol$MCMC.effectiveSize
+    tcontrol$MCMC.effectiveSize <- 100
+    tfit <- ergm.tapered(formula, r=r, beta=beta, tau=tau, 
+         family=family, taper.terms=otaper.terms,
+         response=response, constraints=constraints, reference=reference,
+         control = tcontrol, verbose=TRUE, ...)
+    tcontrol$MCMC.effectiveSize <- tcontrol.orig
+    tau <- -tfit$tapering.coef
+    names(tau) <- paste0("Var(",names(taper.stats),")")
+  }
   
   taper_terms <- switch(family,
     "stereo"=statnet.common::nonsimp_update.formula(taper_formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
               environment(), from.new=TRUE), 
-             statnet.common::nonsimp_update.formula(taper_formula,.~Kurt(~.,coef=.taper.coef,m=.taper.center),
+             statnet.common::nonsimp_update.formula(taper_formula,.~Var(~.),
               environment(), from.new=TRUE) 
       )
 
@@ -114,45 +143,52 @@ ergm.kurtosis <- function(formula,
     newformula <- switch(family,
       "stereo"=statnet.common::nonsimp_update.formula(formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
                 environment(), from.new=TRUE), 
-               statnet.common::nonsimp_update.formula(formula,.~Kurt(~.,coef=.taper.coef,m=.taper.center),
-                environment(), from.new=TRUE) 
-	       )
-#   newformula <- append_rhs.formula(newformula,taper_terms, environment()) 
+               statnet.common::nonsimp_update.formula(formula,.~.+Var(~.),
+                 environment(), from.new=TRUE) ) 
   }else{
     trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,t.terms){all(term != taper.terms)}, taper.terms))
-#   newformula <- append_rhs.formula(trimmed_formula,taper_terms, environment()) 
     newformula <- append_rhs.formula(formula,taper_terms, environment()) 
   }
-  newformula <- append_rhs.formula(formula,taper_terms, environment()) 
 
   env <- new.env(parent=environment(formula))
   env$.taper.center <- taper.stats
-  env$.taper.coef <- log(tau)
+  env$.taper.coef <- tau
   environment(newformula) <- env
 
-  message(sprintf("The tapering formula is:\n %s", paste(deparse(newformula), sep="\n", collapse = "\n")))
-  message("The (natural) tapering parameters (on the log scale) are:")
-  for(i in seq_along(tau)){
-    message(sprintf(" %s : %f",names(tau)[i],log(tau[i])))
+  if(FALSE & verbose){
+    message(sprintf("The tapering formula is:\n %s", paste(deparse(newformula), sep="\n", collapse = "\n")))
+    message("The (natural) tapering parameters are:")
+    for(i in seq_along(tau)){
+      message(sprintf(" %s : %f",names(tau)[i],tau[i]))
+    }
+    message("\n")
   }
-  message("\n")
   
+  control$main.hessian <- FALSE
   control$MCMLE.metric <- "kurtosis"
   if(control$MCMLE.termination == "Hotelling") control$MCMLE.termination <- "confidence"
 
   if(is.null(control$init)){
-    fit0 <- c(ergm(formula, control=control, estimate="MPLE")$coef,log(tau))
-    if(length(tau)==length(fit0)-npar-1){
-     names(fit0)[(npar+1):length(fit0)] <- names(tau)
-    }
-    control$init <- fit0
+    control$init <- c(tfit$coef, tau)
   }
+
+# newformula <- as.formula(
+#   gangnet_iso ~ nodemix("birthplace", levels = 1:4) + 
+#    triangle(attr = "birthplace", diff = FALSE) + triangle + 
+#    Var(nodemix("birthplace", levels = 1:4)) + 
+#    Var(triangle(attr = "birthplace", diff = FALSE)) + Var(triangle) + 
+#    offset(M4(nodemix("birthplace", levels = 1:4))) +
+#    offset(M4(triangle(attr = "birthplace", diff = FALSE))) + offset(M4(triangle)) )
 
   # fit ergm
   if(is.null(target.stats)){
-    fit <- ergm(newformula, control=control, ...)
+#   fit <- ergm(newformula, control=control, offset.coef=tau[npar+(1:npar)], verbose=verbose, ...)
+    fit <- ergm(newformula, control=control, verbose=verbose,
+                response=response, constraints=constraints, reference=reference, ...)
   }else{
-    fit <- ergm(newformula, control=control, target.stats=ostats, offset.coef=log(tau), ...)
+#   fit <- ergm(newformula, control=control, target.stats=ostats, offset.coef=tau, verbose=verbose, ...)
+    fit <- ergm(newformula, control=control, target.stats=ostats, verbose=verbose,
+                response=response, constraints=constraints, reference=reference, ...)
   }
   
 #  # post processs fit to alter Hessian etc
@@ -164,18 +200,24 @@ ergm.kurtosis <- function(formula,
 #    hesstau[seq_along(hesstau)[!is.na(nm)]] <- tau[nm[!is.na(nm)]]
 #    hess <- .tapered.hessian(sample, hesstau)
 #    if(is.curved(fit)){
-#      curved_m <- ergm_model(newformula)
+#      curved_m <- ergm_model(newformula, response=response)
 #      curved_m <- .tapered.curved.hessian(hess,fit$coef,curved_m$etamap)
 #      fit$hessian[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- curved_m
 #    }else{
 #      fit$hessian <- hess
 #    }
-    fit$covar <- -MASS::ginv(fit$hessian)
+# Next best
+#   fit$covar <- -MASS::ginv(fit$hessian)
+    fit$covar <- fit$hessian
 # }
-  fit$tapering.centers <- ostats[as.character(unlist(taper.terms))]
-  fit$tapering.coef <- exp(fit$coef[grep("Kurt(", names(fit$coef), fixed=TRUE)])
+# fit$tapering.centers <- ostats[as.character(unlist(taper.terms))]
+  fit$tapering.centers <- taper.stats
+# fit$tapering.coef <- exp(fit$coef[grep("Kurt(", names(fit$coef), fixed=TRUE)])
+  fit$tapering.coef <- fit$eta[-(seq_along(fit$coef))]
+# names(fit$tapering.coef) <- names(fit$coef)[grep("Var(", names(fit$coef), fixed=TRUE)]
+# names(fit$tapering.coef) <- gsub("Var(","M4(", names(fit$tapering.coef), fixed=TRUE)
   fit$orig.formula <- formula
-  class(fit) <- c("tapered.ergm",family,class(fit))
+  class(fit) <- c("kurtosis.ergm",family,class(fit))
   
   fit
 }

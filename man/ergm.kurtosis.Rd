@@ -6,14 +6,18 @@
 \usage{
 ergm.kurtosis(
   formula,
-  taper.terms = "dependent",
+  taper.terms = "all",
   family = "taper",
   r = 2,
   beta = NULL,
   tau = NULL,
   tapering.centers = NULL,
   target.stats = NULL,
-  control = control.ergm(MCMLE.termination = "confidence"),
+  response = NULL,
+  constraints = ~.,
+  reference = ~Bernoulli,
+  control = control.ergm(MCMLE.termination = "confidence", main.hessian = FALSE),
+  verbose = FALSE,
   ...
 )
 }
@@ -46,6 +50,21 @@ If \code{NULL}, the mean-value parameters used are the observed
 statistics of the network in the formula.
 }}
 
+\item{response}{{Name of the edge attribute whose value is to be
+modeled in the valued ERGM framework. Defaults to \code{NULL} for
+simple presence or absence, modeled via a binary ERGM.}}
+
+\item{constraints}{{A formula specifying one or more constraints
+on the support of the distribution of the networks being modeled,
+using syntax similar to the \code{formula} argument, on the
+right-hand side. See \link[=ergm-constraints]{ERGM constraints}
+\code{\link{ergm}} for details.}}
+
+\item{reference}{{A one-sided formula specifying
+the reference measure (\eqn{h(y)}) to be used.
+See help for \link[=ergm-references]{ERGM reference measures} implemented in the
+\strong{\link[=ergm-package]{ergm}} package.}}
+
 \item{control}{An object of class control.ergm. Passed to the ergm function.}
 
 \item{...}{Additional arguments to ergm.}
@@ -61,7 +80,7 @@ Fits a Tapered ERGM using kurtosis penalized likelihood
 \examples{
 \dontrun{
 data(sampson)
-fit <- ergm.kurtosis(samplike ~ edges + triangles(), tau=0.1))
+fit <- ergm.kurtosis(samplike ~ edges + triangles())
 summary(fit)
 }
 }
