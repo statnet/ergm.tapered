@@ -31,7 +31,7 @@
 #' @examples 
 #' \dontrun{
 #' data(sampson)
-#' fit <- ergm.kurtosis(samplike ~ edges + triangles(), tau=0.1))
+#' fit <- ergm.kurtosis(samplike ~ edges + triangles())
 #' summary(fit)
 #' }
 #' @export
