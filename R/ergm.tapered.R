@@ -19,8 +19,20 @@
 #' @param taper.terms Specification of the tapering used. If the character variable "dependence" then all the dependent
 #' terms are tapered. If the character variable "all" then all terms are tapered.
 #' It can also be the RHS of a formula giving the terms to be tapered. 
+#' @param response {Name of the edge attribute whose value is to be
+#' modeled in the valued ERGM framework. Defaults to \code{NULL} for
+#' simple presence or absence, modeled via a binary ERGM.}
+#' @param reference {A one-sided formula specifying
+#' the reference measure (\eqn{h(y)}) to be used.
+#' See help for \link[=ergm-references]{ERGM reference measures} implemented in the
+#' \strong{\link[=ergm-package]{ergm}} package.}
+#' @param constraints {A formula specifying one or more constraints
+#' on the support of the distribution of the networks being modeled,
+#' using syntax similar to the \code{formula} argument, on the
+#' right-hand side. See \link[=ergm-constraints]{ERGM constraints} 
+#' \code{\link{ergm}} for details.}
 #' @param control An object of class control.ergm. Passed to the ergm function.
-#' @param ... Additional arguments to ergm.
+#' @param ... Additional arguments to \code{\link{ergm}}.
 #' @returns
 #' An object of class c('tapered.ergm','ergm') containing the fit model. In addition to all of the ergm items, 
 #' this object contains tapering.centers, tapering.coef and orig.formula. tapering.centers are the centers for the tapering term.
@@ -31,22 +43,23 @@
 #' @examples 
 #' \dontrun{
 #' data(sampson)
-#' fit <- ergm.tapered(samplike ~ edges + triangles(), tau=0.1)
+#' fit <- ergm.tapered(samplike ~ edges + triangles())
 #' summary(fit)
 #' }
 #' @export
 ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NULL, target.stats=NULL,
-			 family="taper", taper.terms="dependent",
-                         control = control.ergm(MCMLE.termination="confidence"), ...){
+			 family="taper", taper.terms="all",
+                         response=NULL, constraints=~., reference=~Bernoulli,
+                         control = control.ergm(MCMLE.termination="confidence", main.hessian=FALSE), verbose=FALSE, ...){
   
   # Determine the dyadic independence terms
   nw <- ergm.getnetwork(formula)
-  m<-ergm_model(formula, nw, ...)
+  m<-ergm_model(formula, nw, response=response, ...)
 
   if(is.null(tapering.centers)) tapering.centers <- target.stats
 
   if(is.null(tapering.centers))
-    ostats <- summary(m, nw, ...)
+    ostats <- summary(formula, response=response, ...)
   else
     ostats <- tapering.centers
   
@@ -73,7 +86,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     taper_formula <- taper.terms
     taper.terms <- list_rhs.formula(taper.terms)
   }
-  taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms), ...)
+  taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms), response=response, ...)
 
 # if(is.logical(taper.terms)){
 #  if(length(taper.terms)!=length(ostats)){stop("The length of taper.terms must match that of the list of terms.")}
@@ -99,7 +112,11 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
       }}else{tau}}
   )
   npar <- length(ostats)
-  names(tau) <- names(taper.stats)
+  if(family=="stereo"){
+    names(tau) <- "stereo"
+  }else{
+    names(tau) <- names(taper.stats)
+  }
   
   taper_terms <- switch(family,
     "stereo"=statnet.common::nonsimp_update.formula(taper_formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
@@ -126,20 +143,24 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   env$.taper.coef <- tau
   environment(newformula) <- env
 
-  message(sprintf("The tapering formula is:\n %s", paste(deparse(newformula), sep="\n", collapse = "\n")))
-  message("The (natural) tapering parameters are:")
-  for(i in seq_along(tau)){
-    message(sprintf(" %s : %f",names(tau)[i],tau[i]))
+  if(verbose){
+    message(sprintf("The tapering formula is:\n %s", paste(deparse(newformula), sep="\n", collapse = "\n")))
+    message("The (natural) tapering parameters are:")
+    for(i in seq_along(tau)){
+      message(sprintf(" %s : %f",names(tau)[i],tau[i]))
+    }
+    message("\n")
   }
-  message("\n")
   
   if(control$MCMLE.termination == "Hotelling") control$MCMLE.termination <- "confidence"
 
   # fit ergm
   if(is.null(target.stats)){
-    fit <- ergm(newformula, control=control, ...)
+    fit <- ergm(newformula, control=control,
+                response=response, constraints=constraints, reference=reference, ...)
   }else{
-    fit <- ergm(newformula, control=control, target.stats=ostats, offset.coef=tau, ...)
+    fit <- ergm(newformula, control=control, target.stats=ostats, offset.coef=tau,
+                response=response, constraints=constraints, reference=reference, ...)
   }
   
   
@@ -152,7 +173,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     hesstau[seq_along(hesstau)[!is.na(nm)]] <- tau[nm[!is.na(nm)]]
     hess <- .tapered.hessian(sample, hesstau)
     if(is.curved(fit)){
-      curved_m <- ergm_model(formula)
+      curved_m <- ergm_model(formula, nw, response=response, ...)
       curved_m <- .tapered.curved.hessian(hess,fit$coef,curved_m$etamap)
       fit$hessian[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- curved_m
     }else{
@@ -160,7 +181,10 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     }
     fit$covar <- -MASS::ginv(fit$hessian)
   }
-  fit$tapering.centers <- ostats[as.character(unlist(taper.terms))]
+# fit$tapering.centers <- ostats[as.character(unlist(taper.terms))]
+  fit$tapering.centers <- taper.stats
+  fit$tapering.centers.o <- ostats
+  fit$tapering.centers.t <- taper.terms
   fit$tapering.coef <- tau
   fit$orig.formula <- formula
   class(fit) <- c("tapered.ergm",family,class(fit))
