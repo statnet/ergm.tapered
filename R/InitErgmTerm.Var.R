@@ -11,7 +11,6 @@ InitErgmTerm.Var <- function(nw, arglist, response=NULL, ...){
   m <- ergm_model(a$formula, nw,...)
   NVL(nws) <- summary(m, nw, response=response)
 
-
   if(!is.null(beta)){ taper.mult <- beta }else{ taper.mult <- 1 }
   # TODO: Names matching here?
   if(length(nws)==length(taper.mult) & length(nws) > 1) {
@@ -51,7 +50,7 @@ InitErgmTerm.Var <- function(nw, arglist, response=NULL, ...){
 
 # cnt <- c(paste0('Var(',param_names(m, canonical=FALSE),",",beta,')'))
   list(name="var_term", coef.names = cnt,
-       inputs=c(nws, nws), # Note: what gets passed is the difference between the empty network and the observed network.
+       inputs=c(nws),
        auxiliaries = ~.submodel_and_summary(a$formula),
        dependence=TRUE, emptynwstats = c((gs0-nws)^2*beta))
 # The next is the key for curved version of this term

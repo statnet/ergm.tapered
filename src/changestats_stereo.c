@@ -17,7 +17,7 @@ C_CHANGESTAT_FN(c_stereo_term){
   cur_s = INPUT_PARAM[0]*INPUT_PARAM[0];
   for(unsigned int k=0; k<m->n_stats; k++){
     double old_diff = storage->stats[k] - nws[k],
-      new_diff = old_diff + m->workspace[k];
+           new_diff = old_diff + m->workspace[k];
     new_s += new_diff*new_diff;
     cur_s += old_diff*old_diff;
   }
