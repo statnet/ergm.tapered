@@ -16,7 +16,7 @@ ergm.tapered(
   response = NULL,
   constraints = ~.,
   reference = ~Bernoulli,
-  control = control.ergm(MCMLE.termination = "confidence", main.hessian = FALSE),
+  control = control.ergm.ergm(),
   verbose = FALSE,
   ...
 )

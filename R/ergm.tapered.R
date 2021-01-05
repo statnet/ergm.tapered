@@ -50,8 +50,13 @@
 ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NULL, target.stats=NULL,
 			 family="taper", taper.terms="all",
                          response=NULL, constraints=~., reference=~Bernoulli,
-                         control = control.ergm(MCMLE.termination="confidence", main.hessian=FALSE), verbose=FALSE, ...){
+                         control = control.ergm.ergm(), verbose=FALSE, ...){
   
+  # Enforce Taper Penaly removal for estimating equations
+  if(is.null(control$MCMLE.esteq.exclude.statistics)){
+    control["MCMC.esteq.exclude.statistics"] <- "Taper_Penalty"
+  }
+
   # Determine the dyadic independence terms
   nw <- ergm.getnetwork(formula)
   m<-ergm_model(formula, nw, response=response, ...)
@@ -186,8 +191,9 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   fit$tapering.centers.o <- ostats
   fit$tapering.centers.t <- taper.terms
   fit$tapering.coef <- tau
+  fit$r <- r
   fit$orig.formula <- formula
-  class(fit) <- c("tapered.ergm",family,class(fit))
+  class(fit) <- c("ergm.tapered",family,class(fit))
   
   fit
 }
