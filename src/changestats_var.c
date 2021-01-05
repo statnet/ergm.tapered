@@ -16,6 +16,6 @@ C_CHANGESTAT_FN(c_var_term){
   for(unsigned int k=0; k<m->n_stats; k++){
     double old_diff = storage->stats[k] - nws[k],
            new_diff = old_diff + m->workspace[k];
-    CHANGE_STAT[k] = INPUT_PARAM[k]*(new_diff*new_diff - old_diff*old_diff);
+    CHANGE_STAT[k] = (new_diff*new_diff - old_diff*old_diff);
   }
 }
