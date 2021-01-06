@@ -16,7 +16,7 @@ ergm.tapered(
   response = NULL,
   constraints = ~.,
   reference = ~Bernoulli,
-  control = control.ergm.ergm(),
+  control = control.ergm.tapered(),
   verbose = FALSE,
   ...
 )

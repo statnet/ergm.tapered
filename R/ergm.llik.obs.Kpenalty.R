@@ -42,7 +42,7 @@ eq.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
 #end
 
 #' @export
-llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
+llik.fun.obs.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
                      control.llik=control.ergm.tapered.loglik()
                      ){
@@ -54,10 +54,14 @@ llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   etaparam <- eta-eta0
 
   basepred <- xsim %*% etaparam
+  obspred <- xsim.obs %*% etaparam
   mb <- lweighted.mean(basepred,rowweights(xsim))
   vb <- lweighted.var(basepred,rowweights(xsim))
+  mm <- lweighted.mean(obspred,lrowweights(xsim.obs))
+  vm <- lweighted.var(obspred,lrowweights(xsim.obs))
+
 # This is log-lik (and not its negative)
-  llr <- -mb - control.llik$MCMLE.varweight*vb
+  llr <- (mm + control.llik$MCMLE.varweight*vm) - (mb + control.llik$MCMLE.varweight*vb)
 #
   # Simplistic error control;  -800 is effectively like -Inf:
   if(is.infinite(llr) | is.na(llr)){llr <- -200}
@@ -128,7 +132,7 @@ llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   }
 }
 #' @export
-llik.grad.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
+llik.grad.obs.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
                      control.llik=control.ergm.tapered.loglik()
                      ){
@@ -142,13 +146,15 @@ llik.grad.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   eta <- ergm.eta(theta, etamap)
   etaparam <- eta-eta0
 
-  # Calculate log-importance-weights
+  # Calculate log-importance-weights (unconstrained)
   basepred <- xsim %*% etaparam + lrowweights(xsim)
-  
-  # Calculate the estimating function values sans offset
-  llg <- - lweighted.mean(xsim, basepred)
+
+  # Calculate log-importance-weights (constrained)
+  obspred <- xsim.obs %*% etaparam + lrowweights(xsim.obs)
+
+  llg <- lweighted.mean(xsim.obs, obspred) - lweighted.mean(xsim, basepred)
   llg <- t(ergm.etagradmult(theta, llg, etamap))
-  
+
   llg[is.na(llg)] <- 0
 
   # Return negative grad
@@ -185,11 +191,25 @@ eq.jacobian.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   jac0   <-  t(xsim[,Kurt.xsim.stats]) %*% t2
   jac <- rbind(jac0, jac_M4-2*jac_Var)
   jac[is.na(jac) | is.nan(jac)] <- 0
+# obs
+  xsim.obs[,Var.xsim] <- xsim.obs[,Kurt.xsim.stats]^2
+
+  basepred <- xsim.obs %*% etaparam
+  maxbase <- max(basepred)
+  lwi <- basepred - (maxbase + log(sum(exp(basepred-maxbase))) )
+#
+  Ek <- colSums(sweep(xsim.obs,1,exp(lwi),"*"))
+  t2 <- sweep(sweep(xsim.obs,2,Ek,"-"),1,exp(lwi),"*")
+  jac_Var <- t(xsim.obs[,Var.xsim]) %*% t2
+  jac_M4  <- t(xsim.obs[,Var.xsim]^2) %*% t2
+  jac0   <-  t(xsim.obs[,Kurt.xsim.stats]) %*% t2
+# Combine the xsim and xsim.obs
+  jac <- jac - rbind(jac0, jac_M4-2*jac_Var)
   jac
 }
 
 #' @export
-llik.hessian.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
+llik.hessian.obs.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
                      control.llik=control.ergm.tapered.loglik()
                      ){
@@ -204,26 +224,31 @@ llik.hessian.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   etaparam <- eta-eta0
   etaparam[Kurt.xsim] <- 0
 
-  # Calculate log-importance-weights
+  # Calculate log-importance-weights (unconstrained)
   basepred <- xsim %*% etaparam + lrowweights(xsim)
+
+  # Calculate log-importance-weights (constrained)
+  obspred <- xsim.obs %*% etaparam + lrowweights(xsim.obs)
 
   # Calculate the estimating function values sans offset
   esim <- t(ergm.etagradmult(theta, t(xsim), etamap))
   esim[,Kurt.xsim] <- 0
+  osim <- t(ergm.etagradmult(theta, t(xsim.obs), etamap))
+  osim[,Kurt.xsim] <- 0
 
   # Weighted variance-covariance matrix of estimating functions ~ -Hessian
-  H <- -lweighted.var(esim, basepred)
+  H <- lweighted.var(osim, obspred) - lweighted.var(esim, basepred)
 
   dimnames(H) <- list(names(theta), names(theta))
   H
 }
 
 #' @export
-llik.hessian.Kpenalty.numDeriv <- function(theta, xsim, xsim.obs=NULL,
+llik.hessian.obs.Kpenalty.numDeriv <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
                      control.llik=control.ergm.tapered.loglik()
                      ){
-H <-  numDeriv::hessian(llik.fun.Kpenalty,theta,
+H <-  numDeriv::hessian(llik.fun.obs.Kpenalty,theta,
                  xsim=xsim, xsim.obs=xsim.obs,
                  eta0=eta0, etamap=etamap,
                  control.llik=control.llik
@@ -239,92 +264,25 @@ H <-  numDeriv::hessian(llik.fun.Kpenalty,theta,
 H
 }
 
-#' @export
-llik.hessian.Kpenalty.direct <- function(theta, xsim, xsim.obs=NULL,
-                     eta0, etamap, 
-                     control.llik=control.ergm.tapered.loglik()
-                     ){
-  # Obtain canonical parameters incl. offsets and difference from sampled-from
-  eta <- ergm.eta(theta, etamap)
-  etaparam <- eta-eta0
-
-  # Calculate log-importance-weights
-  basepred <- xsim %*% etaparam + lrowweights(xsim)
-
-  # Calculate the estimating function values sans offset
-  esim <- t(ergm.etagradmult(theta, t(xsim), etamap))
-
-  # Weighted variance-covariance matrix of estimating functions ~ -Hessian
-  H <- -lweighted.var(esim, basepred)
-
-  dimnames(H) <- list(names(theta), names(theta))
-
-  kfn <- function(theta, xsim, etamap, eta0){
-    # Convert theta to eta
-    if(is.null(theta)){
-      logm2 <- log(apply(sweep(xsim^2,1,rowweights(xsim),"*"),2,sum))
-      logm4 <- log(apply(sweep(xsim^(8/3),1,rowweights(xsim),"*"),2,sum))
-      logm2[is.infinite(logm2) | is.nan(logm2) | is.na(logm2)] <- 0
-      logm4[is.infinite(logm4) | is.nan(logm4) | is.na(logm4)] <- 0
-    }else{
-      eta <- ergm.eta(theta, etamap)
-      # Calculate approximation to the penalized l(eta) - l(eta0) using a lognormal approximation
-      etaparam <- eta-eta0
-      basepred <- xsim %*% etaparam
-      maxbase <- max(basepred)
-      logm2 <- maxbase + log(apply(sweep(xsim^2,1,rowweights(xsim)*exp(basepred-maxbase),"*"),2,sum))
-      logm4 <- maxbase + log(apply(sweep(xsim^(8/3),1,rowweights(xsim)*exp(basepred-maxbase),"*"),2,sum))
-      logm2[is.infinite(logm2) | is.nan(logm2) | is.na(logm2)] <- 0
-      logm4[is.infinite(logm4) | is.nan(logm4) | is.na(logm4)] <- 0
-    }
-    kurt <- exp(logm4-2*logm2)
-    kurt[is.nan(kurt) | is.na(kurt)] <- 3
-    exterms <- grep("Var(",colnames(xsim),fixed=TRUE)
-    names(kurt) <- colnames(xsim)[-exterms]
-    penalty <- -0.5*((kurt[-exterms]-3)/control.llik$MCMLE.kurtosis.scale)^2
-    penalty <- sum(penalty)
-#   if(verbose) {
-#     message("Kpenalty=")
-#     print(kurt[-exterms])
-#   }
-    penalty
-  }
-
-  if(F){
-   hessian.penalty <- numDeriv::hessian(kfn, theta, 
-    method.args=list(eps=1e-2, d=0.1, zero.tol=sqrt(.Machine$double.eps/7e-7), r=4, v=2, show.details=FALSE),
-    xsim=xsim, etamap=etamap, eta0=eta0, control.llik=control.llik)
-   #print(dim(H))
-   #print(dim(hessian.penalty))
-   print((H))
-   print((hessian.penalty))
-    H+hessian.penalty
-  }else{
-    H
-  }
-}
-
-#llik.grad.Kpenalty.orig <- llik.grad.IS
-#llik.hessian.Kpenalty.orig <- llik.hessian.IS
 # Numerical versions
 #' @export
-llik.grad.Kpenalty.numDeriv <- function(theta, xsim, xsim.obs=NULL,
+llik.grad.obs.Kpenalty.numDeriv <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
                      control.llik=control.ergm.tapered.loglik()
                      ){
-  numDeriv::grad(llik.fun.Kpenalty,theta,
+  numDeriv::grad(llik.fun.obs.Kpenalty,theta,
                  xsim=xsim, xsim.obs=xsim.obs,
                  eta0=eta0, etamap=etamap,
                  control.llik=control.llik
                  )
 }
 #' @export
-eq.jacobian.Kpenalty.numDeriv <- function(theta, xsim, xsim.obs=NULL,
+eq.jacobian.obs.Kpenalty.numDeriv <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
                      control.llik=control.ergm.tapered.loglik()
                      ){
 # numDeriv::jacobian(eq.fun.Kpenalty,theta,
-  nloptr::nl.jacobian(x0=theta,fn=eq.fun.Kpenalty,
+  nloptr::nl.jacobian(x0=theta,fn=eq.fun.obs.Kpenalty,
                  xsim=xsim, xsim.obs=xsim.obs,
                  eta0=eta0, etamap=etamap,
                  control.llik=control.llik

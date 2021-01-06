@@ -50,7 +50,7 @@
 ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NULL, target.stats=NULL,
 			 family="taper", taper.terms="all",
                          response=NULL, constraints=~., reference=~Bernoulli,
-                         control = control.ergm.ergm(), verbose=FALSE, ...){
+                         control = control.ergm.tapered(), verbose=FALSE, ...){
   
   # Enforce Taper Penaly removal for estimating equations
   if(is.null(control$MCMLE.esteq.exclude.statistics)){
@@ -157,7 +157,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     message("\n")
   }
   
-  if(control$MCMLE.termination == "Hotelling") control$MCMLE.termination <- "confidence"
+# if(control$MCMLE.termination == "Hotelling") control$MCMLE.termination <- "confidence"
 
   # fit ergm
   if(is.null(target.stats)){

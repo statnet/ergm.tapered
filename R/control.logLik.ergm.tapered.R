@@ -7,14 +7,13 @@
 #
 #  Copyright 2003-2020 Statnet Commons
 #######################################################################
-#' Auxiliary for Controlling Tapered ERGM Fitting
+#' Auxiliary for Controlling Tapered logLik.ergm 
 #' 
-#' Auxiliary function as user interface for fine-tuning 'ergm' fitting
-#' for tapered models.
+#' Auxiliary function as user interface for fine-tuning logLik.ergm algorithm,
+#' which approximates log likelihood values.
 #' 
-#' This function is only used within a call to the [ergm.tapered()] 
-#' or [ergm.Kpenalty()] functions.
-#' See the \code{usage} section in [ergm()] for details.
+#' This function is only used within a call to the \code{\link{logLik.ergm}}
+#' function.
 #' 
 #' @templateVar MCMCType MCMC
 #'
@@ -40,7 +39,7 @@
 #' }
 #' @keywords models
 #' @export control.ergm.tapered
-control.ergm.tapered<-function(
+control.logLik.ergm.tapered<-function(
                        MCMLE.metric=c("lognormal", "logtaylor",
                          "Median.Likelihood",
                          "EF.Likelihood", "naive",
@@ -49,11 +48,11 @@ control.ergm.tapered<-function(
                        MCMLE.kurtosis.prior=TRUE,
                        MCMLE.kurtosis.location=3.0,
                        MCMLE.kurtosis.scale=0.3,
-                       loglik=control.logLik.ergm.tapered(),
+                       MCMLE.kurtosis.equality=FALSE,
                        ...
                        ){
   formal.args<-formals(sys.function())
-  control <- control.ergm(...)
+  control <- control.logLik.ergm(...)
   formal.args[["..."]]<-NULL
   for(arg in names(formal.args))
     control[arg]<-list(get(arg))
@@ -62,7 +61,5 @@ control.ergm.tapered<-function(
   for(arg in match.arg.pars)
     control[arg]<-list(match.arg(control[[arg]][1],eval(formal.args[[arg]])))
 
-  set.control.class("control.ergm")
+  set.control.class("control.logLik.ergm")
 }
-
-STATIC_TAPERING_CONTROLS <- c("MCMLE.kurtosis.prior", "MCMLE.kurtosis.location", "MCMLE.kurtosis.scale", "MCMLE.kurtosis.equality")
