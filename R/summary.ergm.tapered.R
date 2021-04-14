@@ -152,10 +152,14 @@ summary.ergm.tapered <- function (object, ...,
   } else {
     ans$message <- "\nFor this model, the pseudolikelihood is the same as the likelihood.\n"
   }
-# mle.lik<-try(logLik(object,...), silent=TRUE)
-# null.lik<-try(logLikNull(object,...), silent=TRUE)
-  mle.lik<-object$null.lik+object$loglikelihood
-  null.lik<-object$null.lik
+  null.lik<-try(logLikNull(object,...), silent=TRUE)
+  if(inherits(null.lik,"try-error")){
+    null.lik<-object$null.lik
+  }
+  mle.lik<-try(logLik(object,...), silent=TRUE)
+  if(inherits(mle.lik,"try-error")){
+    mle.lik<-null.lik+object$loglikelihood
+  }
 
   ans$null.lik.0 <- is.na(null.lik)
 
@@ -181,7 +185,7 @@ summary.ergm.tapered <- function (object, ...,
   a <- grep("Taper_Penalty",cnames.all,fixed=TRUE)
   if(length(a)>0){
     ans$Taper_Penalty <- object$coef[a]
-    ans$r <- object$r/sqrt(-ans$Taper_Penalty)
+    ans$r <- object$r/sqrt(3*exp(ans$Taper_Penalty)/(1+exp(ans$Taper_Penalty)))
   }
   a <- grep("Var(",cnames.all,fixed=TRUE)
   if(length(a)>0){

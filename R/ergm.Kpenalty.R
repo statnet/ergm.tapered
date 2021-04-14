@@ -32,6 +32,7 @@
 #' right-hand side. See \link[=ergm-constraints]{ERGM constraints} 
 #' \code{\link{ergm}} for details.}
 #' @param control An object of class control.ergm. Passed to the ergm function.
+#' @param eval.loglik {Logical:  If TRUE, evaluate the log-likelihood associated with the fit.}
 #' @param ... Additional arguments to \code{\link{ergm}}.
 #' @returns
 #' An object of class c('tapered.ergm','ergm') containing the fit model. In addition to all of the ergm items, 
@@ -50,7 +51,7 @@
 ergm.Kpenalty <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NULL, target.stats=NULL,
 			 family="taper", taper.terms="all",
                          response=NULL, constraints=~., reference=~Bernoulli,
-                         control = control.ergm.tapered(), verbose=FALSE, ...){
+                         control = control.ergm.tapered(), verbose=FALSE, eval.loglik=TRUE, ...){
 
   # Enforce Kpenalty metric
   control$MCMLE.metric <- "Kpenalty"
@@ -135,11 +136,12 @@ ergm.Kpenalty <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NU
     tcontrol$MCMLE.steplength <- 0.5
     tcontrol.orig <- tcontrol$MCMC.effectiveSize
     tcontrol$MCMC.effectiveSize <- 100
+    tcontrol$MCMC.effectiveSize.maxruns=6
     tfit <- ergm.tapered(formula, r=r, beta=beta, tau=tau, 
          family=family, taper.terms=otaper.terms,
          response=response, constraints=constraints, reference=reference,
          control = tcontrol, eval.loglik=FALSE, verbose=FALSE, ...)
-    control$init <- c(tfit$coef, -1)
+    control$init <- tfit$coef
   }
 
   taper_terms <- switch(family,
@@ -178,14 +180,18 @@ ergm.Kpenalty <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NU
   
 # control$main.hessian <- FALSE
 # if(control$MCMLE.termination == "Hotelling") control$MCMLE.termination <- "confidence"
+  re.names <- names(summary(newformula))
+  control$init <- c(control$init,-log(2))
+  names(control$init)[length(control$init)] <- "Taper_Penalty"
+  control$init <- control$init[match(re.names,names(control$init))]
 
   # fit ergm
   if(is.null(target.stats)){
     fit <- ergm(newformula, control=control,
-                response=response, constraints=constraints, reference=reference, verbose=verbose, ...)
+                response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
   }else{
     fit <- ergm(newformula, control=control, target.stats=ostats, offset.coef=tau,
-                response=response, constraints=constraints, reference=reference, verbose=verbose, ...)
+                response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
   }
   
   

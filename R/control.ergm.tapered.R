@@ -62,7 +62,7 @@ control.ergm.tapered<-function(
   for(arg in match.arg.pars)
     control[arg]<-list(match.arg(control[[arg]][1],eval(formal.args[[arg]])))
 
-  set.control.class("control.ergm")
+  set.control.class(c("control.ergm", "control.ergm.tapered"))
 }
 
 STATIC_TAPERING_CONTROLS <- c("MCMLE.kurtosis.prior", "MCMLE.kurtosis.location", "MCMLE.kurtosis.scale", "MCMLE.kurtosis.equality")

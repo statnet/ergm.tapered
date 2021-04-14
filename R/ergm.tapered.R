@@ -32,6 +32,12 @@
 #' right-hand side. See \link[=ergm-constraints]{ERGM constraints} 
 #' \code{\link{ergm}} for details.}
 #' @param control An object of class control.ergm. Passed to the ergm function.
+#' @param fixed A `logical`: if this is \code{TRUE}, the tapering is fixed at the passed values. 
+#' If this is \code{FALSE}, the tapering is estimated using a kurtosis penalized likelihood.
+#' @param verbose A `logical`: if this is
+#' \code{TRUE}, the program will print out additional
+#' information about the progress of estimation.
+#' @param eval.loglik {Logical:  If TRUE, evaluate the log-likelihood associated with the fit.}
 #' @param ... Additional arguments to \code{\link{ergm}}.
 #' @returns
 #' An object of class c('tapered.ergm','ergm') containing the fit model. In addition to all of the ergm items, 
@@ -50,12 +56,22 @@
 ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NULL, target.stats=NULL,
 			 family="taper", taper.terms="all",
                          response=NULL, constraints=~., reference=~Bernoulli,
-                         control = control.ergm.tapered(), verbose=FALSE, ...){
-  
-  # Enforce Taper Penaly removal for estimating equations
-  if(is.null(control$MCMLE.esteq.exclude.statistics)){
-    control["MCMC.esteq.exclude.statistics"] <- "Taper_Penalty"
+                         control = control.ergm.tapered(), fixed=TRUE, verbose=FALSE, eval.loglik=TRUE, ...){
+
+  if(!is(control,"control.ergm.tapered")){
+    stop("The control variable must be of class 'control.ergm.tapered'.")
   }
+  # Enforce Kpenalty metric
+  if(!fixed){
+    otaper.terms <- taper.terms
+    control$MCMLE.metric <- "Kpenalty"
+  }
+  control["MCMC.esteq.exclude.statistics"] <- "Taper_Penalty"
+  # Statistics to exclude from the estimating equations
+  # Needed by ergm.getMCMCsample
+  match.llik.arg.pars <- c("MCMLE.metric","MCMC.esteq.exclude.statistics",STATIC_TAPERING_CONTROLS)
+  for(arg in match.llik.arg.pars)
+    control$loglik[arg]<-list(control[[arg]])
 
   # Determine the dyadic independence terms
   nw <- ergm.getnetwork(formula)
@@ -123,17 +139,44 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     names(tau) <- names(taper.stats)
   }
   
-  taper_terms <- switch(family,
-    "stereo"=statnet.common::nonsimp_update.formula(taper_formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
+  if(!fixed & is.null(control$init)){
+    tcontrol <- control
+    tcontrol$MCMLE.metric <- "lognormal"
+    tcontrol$MCMLE.maxit <- 10
+    tcontrol$MCMLE.steplength <- 0.5
+    tcontrol.orig <- tcontrol$MCMC.effectiveSize
+    tcontrol$MCMC.effectiveSize <- 100
+    tcontrol$MCMC.effectiveSize.maxruns=6
+    tfit <- ergm.tapered(formula, r=r, beta=beta, tau=tau, 
+         family=family, taper.terms=otaper.terms,
+         response=response, constraints=constraints, reference=reference,
+         control = tcontrol, eval.loglik=FALSE, verbose=FALSE, ...)
+    control$init <- tfit$coef
+  }
+
+  taper_terms <- switch(paste0(family,ifelse(fixed,"_fixed","_notfixed")),
+    "stereo_fixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
               environment(), from.new=TRUE), 
+    "stereo_notfixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
+              environment(), from.new=TRUE), 
+    "taper_fixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
+              environment(), from.new=TRUE), 
+    "taper_notfixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Kpenalty(~.,coef=.taper.coef,m=.taper.center),
+              environment(), from.new=TRUE),
              statnet.common::nonsimp_update.formula(taper_formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
-              environment(), from.new=TRUE) 
+              environment(), from.new=TRUE)
       )
 
   if(length(list_rhs.formula(formula))==length(taper.terms)){
-    newformula <- switch(family,
-      "stereo"=statnet.common::nonsimp_update.formula(formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
+    newformula <- switch(paste0(family,ifelse(fixed,"_fixed","_notfixed")),
+      "stereo_fixed"=statnet.common::nonsimp_update.formula(formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
                 environment(), from.new=TRUE), 
+      "stereo_notfixed"=statnet.common::nonsimp_update.formula(formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
+                environment(), from.new=TRUE), 
+      "taper_fixed"=statnet.common::nonsimp_update.formula(formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
+                environment(), from.new=TRUE), 
+      "taper_notfixed"=statnet.common::nonsimp_update.formula(formula,.~Kpenalty(~.,coef=.taper.coef,m=.taper.center),
+                environment(), from.new=TRUE),
                statnet.common::nonsimp_update.formula(formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
                 environment(), from.new=TRUE) 
 	       )
@@ -157,36 +200,53 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     message("\n")
   }
   
+# control$main.hessian <- FALSE
 # if(control$MCMLE.termination == "Hotelling") control$MCMLE.termination <- "confidence"
+  if(!fixed){
+    re.names <- names(summary(newformula))
+    control$init <- c(control$init,-log(2))
+    names(control$init)[length(control$init)] <- "Taper_Penalty"
+    control$init <- control$init[match(re.names,names(control$init))]
+  }else{
+    if(!is.null(control$init)){
+      warning("check the names are ordered correctly (not coded yet)")
+      print(control$init)
+    }
+  }
 
   # fit ergm
   if(is.null(target.stats)){
     fit <- ergm(newformula, control=control,
-                response=response, constraints=constraints, reference=reference, ...)
+                response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
   }else{
     fit <- ergm(newformula, control=control, target.stats=ostats, offset.coef=tau,
-                response=response, constraints=constraints, reference=reference, ...)
+                response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
   }
   
   
-  # post processs fit to alter Hessian etc
-  sample <- fit$sample[[1]][,1:npar,drop=FALSE]
-  if(is.null(tapering.centers)){
-    hesstau <- ostats - ostats
-#   hesstau[names(ostats) %in% names(tau)] <- tau
-    nm <- match(names(ostats),names(tau))
-    hesstau[seq_along(hesstau)[!is.na(nm)]] <- tau[nm[!is.na(nm)]]
-    hess <- .tapered.hessian(sample, hesstau)
-    if(is.curved(fit)){
-      curved_m <- ergm_model(formula, nw, response=response, ...)
-      curved_m <- .tapered.curved.hessian(hess,fit$coef,curved_m$etamap)
-      fit$hessian[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- curved_m
-    }else{
-      fit$hessian <- hess
+  if(fixed){
+    # post processs fit to alter Hessian etc
+    sample <- fit$sample[[1]][,1:npar,drop=FALSE]
+    if(is.null(tapering.centers)){
+      hesstau <- ostats - ostats
+  #   hesstau[names(ostats) %in% names(tau)] <- tau
+      nm <- match(names(ostats),names(tau))
+      hesstau[seq_along(hesstau)[!is.na(nm)]] <- tau[nm[!is.na(nm)]]
+      hess <- .tapered.hessian(sample, hesstau)
+      if(is.curved(fit)){
+        curved_m <- ergm_model(formula, nw, response=response, ...)
+        curved_m <- .tapered.curved.hessian(hess,fit$coef,curved_m$etamap)
+        fit$hessian[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- curved_m
+      }else{
+        fit$hessian <- hess
+      }
+      fit$covar <- -MASS::ginv(fit$hessian)
     }
-    fit$covar <- -MASS::ginv(fit$hessian)
+  }else{
+      fit$covar <- -MASS::ginv(fit$hessian)
   }
 # fit$tapering.centers <- ostats[as.character(unlist(taper.terms))]
+
   fit$tapering.centers <- taper.stats
   fit$tapering.centers.o <- ostats
   fit$tapering.centers.t <- taper.terms
@@ -195,6 +255,10 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   fit$orig.formula <- formula
   class(fit) <- c("ergm.tapered",family,class(fit))
   
+# fit$covar <- fit$est.cov
+# fit$covar <- -MASS::ginv(fit$hessian)
+# fit$est.cov <- fit$covar
+
   fit
 }
 

@@ -17,7 +17,9 @@ ergm.tapered(
   constraints = ~.,
   reference = ~Bernoulli,
   control = control.ergm.tapered(),
+  fixed = TRUE,
   verbose = FALSE,
+  eval.loglik = TRUE,
   ...
 )
 }
@@ -66,6 +68,15 @@ See help for \link[=ergm-references]{ERGM reference measures} implemented in the
 \strong{\link[=ergm-package]{ergm}} package.}}
 
 \item{control}{An object of class control.ergm. Passed to the ergm function.}
+
+\item{fixed}{A \code{logical}: if this is \code{TRUE}, the tapering is fixed at the passed values.
+If this is \code{FALSE}, the tapering is estimated using a kurtosis penalized likelihood.}
+
+\item{verbose}{A \code{logical}: if this is
+\code{TRUE}, the program will print out additional
+information about the progress of estimation.}
+
+\item{eval.loglik}{{Logical:  If TRUE, evaluate the log-likelihood associated with the fit.}}
 
 \item{...}{Additional arguments to \code{\link{ergm}}.}
 }

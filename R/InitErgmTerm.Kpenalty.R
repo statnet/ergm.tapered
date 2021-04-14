@@ -30,26 +30,29 @@ InitErgmTerm.Kpenalty <- function(nw, arglist, response=NULL, ...){
   gs0 <- summary(m, NULL, response=response)
 
   map <- function(x, n, ...){
-    c(ergm.eta(x[-n], m$etamap), x[n])
+    c(ergm.eta(x[-n], m$etamap), -3*exp(x[n])/(1+exp(x[n])))
   }
 
   gradient <- function(x, n, ...){
     a <- ergm.etagrad(x[-n], m$etamap)
-    cbind(a, rep(c(0,1),c(nrow(a),1)))
+    a <- rbind(a,0)
+    cbind(a, rep(c(0,-3*exp(x[n])/((1+exp(x[n]))^2)),c(nrow(a)-1,1)))
   }
 
 # mintheta <- c(m$etamap$mintheta,-Inf)
 # maxtheta <- c(m$etamap$maxtheta,0)
   cnt <- c(param_names(m, canonical=FALSE), "Taper_Penalty")
 
+  params <- c(rep(list(NULL), nparam(m)),-log(2))
+# params <- c(as.list(beta),-log(2))
 # params <- rep(list(NULL), nparam(m)+1)
-# names(params) <- c(param_names(m, canonical=FALSE),"Taper_Penalty")
+  names(params) <- c(param_names(m, canonical=FALSE),"Taper_Penalty")
 
   list(name="Kpenalty_term", coef.names = cnt,
        inputs=c(beta, nws),
        auxiliaries = ~.submodel_and_summary(a$formula),
-       dependence=TRUE, emptynwstats = c(gs0, sum((gs0-nws)^2*beta)))
-#      map = map, gradient = gradient, 
+       dependence=TRUE, emptynwstats = c(gs0, sum((gs0-nws)^2*beta)),
+       map = map, gradient = gradient,
 #      minpar=mintheta, maxpar=maxtheta,
-#      params = params)
+       params = params)
 }

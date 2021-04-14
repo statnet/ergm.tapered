@@ -27,7 +27,7 @@ eq.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
 # names(kurt) <- colnames(xsim)[-Kpenalty]
 #print(mean(kurt))
   penalty <- -0.5*((kurt-control.llik$MCMLE.kurtosis.location)/control.llik$MCMLE.kurtosis.scale)^2
-  penalty <- sum(penalty)
+  penalty <- mean(penalty)
 # cat(sprintf("mean(kurt)=%f, penalty = %9.5g\n",mean(kurt),penalty))
 # a=(c(Ek,kurt-control.llik$MCMLE.kurtosis.location))
 # if(length(a)!=20 | any(is.na(a)) | any(is.nan(a))){browser()}
@@ -51,6 +51,18 @@ llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
 
 # Convert theta to eta
   eta <- ergm.eta(theta, etamap)
+# if(eta[Kpenalty] < -10){
+#   eta[Kpenalty] <- 0
+# }else{
+#   eta[Kpenalty] <- - 3*exp(eta[Kpenalty]) / (1 + exp(eta[Kpenalty]))
+# }
+# if(eta0[Kpenalty] < -10){
+#   eta0[Kpenalty] <- 0
+# }else{
+#   eta0[Kpenalty] <- - exp(eta[Kpenalty])
+#   eta0[Kpenalty] <- - 3*exp(eta0[Kpenalty]) / (1 + exp(eta0[Kpenalty]))
+# }
+# eta0[Kpenalty] <- - exp(eta0[Kpenalty])
   etaparam <- eta-eta0
 
   basepred <- xsim %*% etaparam
@@ -69,30 +81,59 @@ llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   logm4[is.infinite(logm4) | is.nan(logm4) | is.na(logm4)] <- 0
   kurt <- exp(logm4-2*logm2)
   kurt[is.nan(kurt) | is.na(kurt)] <- 3
-  penalty <- -0.5*((kurt-control.llik$MCMLE.kurtosis.location)/control.llik$MCMLE.kurtosis.scale)^2
-  Kurt_penalty0 <- sum(penalty)
+# if(kurt < 2) kurt <- 2
+# penalty <- -0.5*((kurt-control.llik$MCMLE.kurtosis.location)/control.llik$MCMLE.kurtosis.scale)^2
+  if(length(control.llik$MCMLE.kurtosis.location)==0){browser()}
+  if(length(kurt)==0){browser()}
+# if(kurt > 0.5*control.llik$MCMLE.kurtosis.location){
+    penalty <- -0.5*((kurt-control.llik$MCMLE.kurtosis.location)/control.llik$MCMLE.kurtosis.scale)^2
+# }else{
+#   penalty <- 0
+# }
+  Kurt_penalty0 <- mean(penalty)
 
   maxbase <- max(basepred)
   lwi <- basepred - (maxbase + log(sum(exp(basepred-maxbase))) )
-  logm2 <- log(colSums(sweep(xsim[,-Kpenalty]^2  ,1,exp(lwi),"*")))
+  logm2 <- log(colSums(sweep(xsim[,-Kpenalty]^2,1,exp(lwi),"*")))
   logm4 <- log(colSums(sweep(xsim[,-Kpenalty]^4,1,exp(lwi),"*")))
   logm2[is.infinite(logm2) | is.nan(logm2) | is.na(logm2)] <- 0
   logm4[is.infinite(logm4) | is.nan(logm4) | is.na(logm4)] <- 0
   kurt <- exp(logm4-2*logm2)
   kurt[is.nan(kurt) | is.na(kurt)] <- 3
-  penalty <- -0.5*((kurt-control.llik$MCMLE.kurtosis.location)/control.llik$MCMLE.kurtosis.scale)^2
-  Kurt_penalty <- sum(penalty)
+# if(kurt < 2) kurt <- 2
+# if(length(control.llik$MCMLE.kurtosis.location)==0){browser()}
+# if(kurt > 0.5*control.llik$MCMLE.kurtosis.location){
+    penalty <- -0.5*((kurt-control.llik$MCMLE.kurtosis.location)/control.llik$MCMLE.kurtosis.scale)^2
+# }else{
+#   penalty <- 0
+# }
+  Kurt_penalty <- mean(penalty)
 #
   Kurt_penalty_diff <- Kurt_penalty - Kurt_penalty0
 #
   penalty <- -eta[Kpenalty]^2 + eta0[Kpenalty]^2
 #if(eta[Kpenalty]!=eta0[Kpenalty]) browser()
 # cat(sprintf("llr=%f, penalty = %9.5g\n",llr,penalty))
-  Ek  <-  eta[Kpenalty]*sum(xsim[,Kpenalty]*exp(lwi))
+  Ek  <- eta[Kpenalty]*sum(xsim[,Kpenalty]*exp(lwi))
 # Ek0 <- eta0[Kpenalty]*mean(xsim[,Kpenalty])
   Ek0 <- eta0[Kpenalty]*sum(xsim[,Kpenalty]*exp(lwi))
   penalty <- Ek - Ek0
+#
+# if(eta0[Kpenalty] > 0){
+#  eta0_Kpenalty <- 0
+# }else{
+#  eta0_Kpenalty <- eta0[Kpenalty]
+# }
+# if(eta[Kpenalty] > 0){
+#  eta_Kpenalty <- 0
+# }else{
+#  eta_Kpenalty <- eta[Kpenalty]
+# }
+# Tpenalty_diff <- eta_Kpenalty - eta0_Kpenalty
+
   Tpenalty_diff <- eta[Kpenalty] - eta0[Kpenalty]
+
+#
 # cat(sprintf("llr=%f, Ek = %9.5g, sum = %9.5g, penalty = %9.5g\n",llr,Ek,sum(xsim[,Kpenalty]*exp(lwi)),penalty))
  if(control.llik$MCMLE.dampening.min.ess < 0){
    cat(sprintf("Kurtosis of statistics:\n"))
@@ -106,6 +147,7 @@ llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
 #
   llr <- llr + 2*Tpenalty_diff + Kurt_penalty_diff
 # llr <- llr + Ek
+#
 # logm4[is.infinite(logm4) | is.nan(logm4) | is.na(logm4)] <- 0
 # kurt <- exp(logm4-2*logm2)
 # kurt[is.nan(kurt) | is.na(kurt)] <- 3
