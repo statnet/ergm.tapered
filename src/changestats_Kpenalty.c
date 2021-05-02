@@ -26,7 +26,7 @@ C_CHANGESTAT_FN(c_Kpenalty_term){
  // if(k==3 && (storage->stats[k] + m->workspace[k] < 0.0)) Rprintf("k %d i[k] %f orig_nws[k] %f cur_nws[k] %f new_nws[k] %f old_diff %f new_diff %f\n",k,INPUT_PARAM[k],nws[k],storage->stats[k],storage->stats[k]+ m->workspace[k],old_diff,new_diff);
 //  if(k==3 && old_diff < -131.0 ) Rprintf("k %d i[k] %f orig_nws[k] %f cur_nws[k] %f new_nws[k] %f old_diff %f new_diff %f\n",k,INPUT_PARAM[k],nws[k],storage->stats[k],storage->stats[k]+ m->workspace[k],old_diff,new_diff);
 //  if(k==3 && unif_rand()>0.99999) Rprintf("k %d i[k] %f orig_nws[k] %f cur_nws[k] %f new_nws[k] %f old_diff %f new_diff %f\n",k,INPUT_PARAM[k],nws[k],storage->stats[k],storage->stats[k]+ m->workspace[k],old_diff,new_diff);
-    CHANGE_STAT[N_CHANGE_STATS-1] += INPUT_PARAM[k]*(new_diff*new_diff - old_diff*old_diff);
+    CHANGE_STAT[N_CHANGE_STATS-1] -= INPUT_PARAM[k]*(new_diff*new_diff - old_diff*old_diff);
 // if(unif_rand()>0.99999) Rprintf("k %d i[k] %f orig_nws[k] %f cur_nws[k] %f new_nws[k] %f old_diff %f new_diff %f\n",k,INPUT_PARAM[k],nws[k],storage->stats[k],storage->stats[k]+ m->workspace[k],old_diff,new_diff);
   }
 //if(unif_rand()>0.9999) Rprintf("T_P computed %d %f\n",N_CHANGE_STATS,CHANGE_STAT[N_CHANGE_STATS-1]);

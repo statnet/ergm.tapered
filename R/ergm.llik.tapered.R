@@ -1,7 +1,7 @@
 # Kurtosis related functions
 eq.fun.tapered <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
-                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.prior=FALSE)
+                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.penalty=2, MCMLE.kurtosis.prior=FALSE)
                      ){
 
   Ki <- control.llik$MCMLE.kurtosis.location
@@ -32,7 +32,7 @@ eq.fun.tapered <- function(theta, xsim, xsim.obs=NULL,
 
 llik.fun.tapered <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
-                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.prior=FALSE)
+                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.penalty=2, MCMLE.kurtosis.prior=FALSE)
                      ){
 # Convert theta to eta
   eta <- ergm.eta(theta, etamap)
@@ -59,7 +59,7 @@ llik.fun.tapered <- function(theta, xsim, xsim.obs=NULL,
 }
 llik.grad.tapered <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
-                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.prior=FALSE)
+                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.penalty=2, MCMLE.kurtosis.prior=FALSE)
                      ){
 
   # Obtain canonical parameters incl. offsets and difference from sampled-from
@@ -81,7 +81,7 @@ llik.grad.tapered <- function(theta, xsim, xsim.obs=NULL,
 
 eq.jacobian.tapered <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
-                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.prior=FALSE)
+                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.penalty=2, MCMLE.kurtosis.prior=FALSE)
                      ){
 
   Ki <- control.llik$MCMLE.kurtosis.location
@@ -106,7 +106,7 @@ eq.jacobian.tapered <- function(theta, xsim, xsim.obs=NULL,
 
 llik.hessian.tapered <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
-                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.prior=FALSE)
+                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.penalty=2, MCMLE.kurtosis.prior=FALSE)
                      ){
 
   Var.xsim <- grep("Var(",colnames(xsim), fixed=TRUE)
@@ -135,7 +135,7 @@ llik.hessian.tapered <- function(theta, xsim, xsim.obs=NULL,
 
 llik.hessian.tapered.numDeriv <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
-                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.prior=FALSE)
+                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.penalty=2, MCMLE.kurtosis.prior=FALSE)
                      ){
 H <-  numDeriv::hessian(llik.fun.tapered,theta,
                  xsim=xsim, xsim.obs=xsim.obs,
@@ -154,7 +154,7 @@ H
 }
 llik.grad.tapered.numDeriv <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
-                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.prior=FALSE)
+                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.penalty=2, MCMLE.kurtosis.prior=FALSE)
                      ){
   numDeriv::grad(llik.fun.tapered,theta,
                  xsim=xsim, xsim.obs=xsim.obs,
@@ -164,7 +164,7 @@ llik.grad.tapered.numDeriv <- function(theta, xsim, xsim.obs=NULL,
 }
 eq.jacobian.tapered.numDeriv <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
-                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.prior=FALSE)
+                     control.llik=list(MCMLE.trustregion=20, MCMLE.varweight=0.5, MCMLE.dampening=FALSE,MCMLE.dampening.min.ess=100, MCMLE.dampening.level=0.1, MCMLE.kurtosis.location=3.0, MCMLE.kurtosis.scale=0.3, MCMLE.kurtosis.penalty=2, MCMLE.kurtosis.prior=FALSE)
                      ){
 # numDeriv::jacobian(eq.fun.tapered,theta,
   nloptr::nl.jacobian(x0=theta,fn=eq.fun.tapered,

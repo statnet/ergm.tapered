@@ -185,7 +185,7 @@ summary.ergm.tapered <- function (object, ...,
   a <- grep("Taper_Penalty",cnames.all,fixed=TRUE)
   if(length(a)>0){
     ans$Taper_Penalty <- object$coef[a]
-    ans$r <- object$r/sqrt(3*exp(ans$Taper_Penalty)/(1+exp(ans$Taper_Penalty)))
+    ans$r <- object$r/sqrt(3*exp(log(2)*(ans$Taper_Penalty-2))/(1+exp(log(2)*(ans$Taper_Penalty-2))))
   }
   a <- grep("Var(",cnames.all,fixed=TRUE)
   if(length(a)>0){

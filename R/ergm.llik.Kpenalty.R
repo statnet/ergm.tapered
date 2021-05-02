@@ -83,8 +83,6 @@ llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   kurt[is.nan(kurt) | is.na(kurt)] <- 3
 # if(kurt < 2) kurt <- 2
 # penalty <- -0.5*((kurt-control.llik$MCMLE.kurtosis.location)/control.llik$MCMLE.kurtosis.scale)^2
-  if(length(control.llik$MCMLE.kurtosis.location)==0){browser()}
-  if(length(kurt)==0){browser()}
 # if(kurt > 0.5*control.llik$MCMLE.kurtosis.location){
     penalty <- -0.5*((kurt-control.llik$MCMLE.kurtosis.location)/control.llik$MCMLE.kurtosis.scale)^2
 # }else{
@@ -145,7 +143,7 @@ llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
                Kurt_penalty_diff,Tpenalty_diff))
  }
 #
-  llr <- llr + 2*Tpenalty_diff + Kurt_penalty_diff
+  llr <- llr + control.llik$MCMLE.kurtosis.penalty*Tpenalty_diff + Kurt_penalty_diff
 # llr <- llr + Ek
 #
 # logm4[is.infinite(logm4) | is.nan(logm4) | is.na(logm4)] <- 0
@@ -175,11 +173,8 @@ llik.grad.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
                      control.llik=control.ergm.tapered.loglik()
                      ){
 
-  Var.xsim <- grep("Var(",colnames(xsim), fixed=TRUE)
-# Standardize the Var and M4 against original
-  Kurt.xsim.stats <- substr(colnames(xsim)[Var.xsim],5,nchar(colnames(xsim)[Var.xsim])-1)
-  Kurt.xsim.stats <- match(Kurt.xsim.stats,colnames(xsim))
-  xsim[,Var.xsim] <- xsim[,Kurt.xsim.stats]^2
+  Kpenalty <- grep("Taper_Penalty",colnames(xsim), fixed=TRUE)
+
   # Obtain canonical parameters incl. offsets and difference from sampled-from
   eta <- ergm.eta(theta, etamap)
   etaparam <- eta-eta0
@@ -191,7 +186,24 @@ llik.grad.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   llg <- - lweighted.mean(xsim, basepred)
   llg <- t(ergm.etagradmult(theta, llg, etamap))
   
-  llg[is.na(llg)] <- 0
+  maxbase <- max(basepred)
+  lwi <- basepred - (maxbase + log(sum(exp(basepred-maxbase))) )
+#
+  logm2 <- log(colMeans(xsim[,-Kpenalty]^2))
+  logm4 <- log(colMeans(xsim[,-Kpenalty]^4))
+  logm2[is.infinite(logm2) | is.nan(logm2) | is.na(logm2)] <- 0
+  logm4[is.infinite(logm4) | is.nan(logm4) | is.na(logm4)] <- 0
+  kurt <- exp(logm4-2*logm2)
+  kurt[is.nan(kurt) | is.na(kurt)] <- 3
+
+  Ek <- colSums(sweep(xsim,1,exp(lwi),"*"))
+  t2 <- sweep(sweep(xsim,2,Ek,"-"),1,exp(lwi),"*")
+  g_M2  <- t(xsim[,-Kpenalty]^2) %*% t2
+  g_M4  <- t(xsim[,-Kpenalty]^4) %*% t2
+  g <- kurt * (g_M4-2*g_M2)
+browser()
+  llg <- llg + g + control.llik$MCMLE.kurtosis.penalty
+  llg[is.na(llg) | is.nan(llg)] <- 0
 
   # Return negative grad
   llg

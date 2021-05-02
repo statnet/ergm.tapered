@@ -11,6 +11,7 @@ control.logLik.ergm.tapered(
   MCMLE.kurtosis.prior = TRUE,
   MCMLE.kurtosis.location = 3,
   MCMLE.kurtosis.scale = 0.3,
+  MCMLE.kurtosis.penalty = 2,
   MCMLE.kurtosis.equality = FALSE,
   ...
 )
@@ -26,6 +27,8 @@ See \code{\link[=control.ergm]{control.ergm()}} for the standard \code{\link[=er
 taget kurtosis value.}
 
 \item{MCMLE.kurtosis.scale}{numeric The standard deviation of the prior for kurtosis.}
+
+\item{MCMLE.kurtosis.penalty}{numeric: The size of the penalty for larger values of the tapering parameter on the log-likelihood.}
 
 \item{MCMLE.kurtosis.equality}{Logical: If TRUE, constrain the kurtosis in expectation.}
 

@@ -145,8 +145,8 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     tcontrol$MCMLE.maxit <- 10
     tcontrol$MCMLE.steplength <- 0.5
     tcontrol.orig <- tcontrol$MCMC.effectiveSize
-    tcontrol$MCMC.effectiveSize <- 100
-    tcontrol$MCMC.effectiveSize.maxruns=6
+#   tcontrol$MCMC.effectiveSize <- 100
+    tcontrol$MCMC.effectiveSize.maxruns=8
     tfit <- ergm.tapered(formula, r=r, beta=beta, tau=tau, 
          family=family, taper.terms=otaper.terms,
          response=response, constraints=constraints, reference=reference,
@@ -202,15 +202,17 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   
 # control$main.hessian <- FALSE
 # if(control$MCMLE.termination == "Hotelling") control$MCMLE.termination <- "confidence"
+  re.names <- names(summary(newformula))
   if(!fixed){
-    re.names <- names(summary(newformula))
-    control$init <- c(control$init,-log(2))
+    control$init <- c(control$init,1)
     names(control$init)[length(control$init)] <- "Taper_Penalty"
     control$init <- control$init[match(re.names,names(control$init))]
   }else{
     if(!is.null(control$init)){
       warning("check the names are ordered correctly (not coded yet)")
       print(control$init)
+      re.names <- re.names[-length(re.names)]
+      names(control$init) <- re.names
     }
   }
 
@@ -223,10 +225,19 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
                 response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
   }
   
-  
-  if(fixed){
     # post processs fit to alter Hessian etc
-    sample <- fit$sample[[1]][,1:npar,drop=FALSE]
+    if(fixed){
+      sample <- as.matrix(fit$sample)[,1:npar,drop=FALSE]
+      fit$hessian <- fit$hessian[1:npar,1:npar]
+      fcoef <- fit$coef[1:npar]
+    }else{
+      sample <- as.matrix(fit$sample)[,1:npar,drop=FALSE]
+    # fit$hessian <- fit$hessian[1:npar,1:npar]
+    # fit$hessian <- -fit$hessian
+      fcoef <- fit$coef[1:npar]
+    }
+    colnames(sample) <- names(ostats)
+    
     if(is.null(tapering.centers)){
       hesstau <- ostats - ostats
   #   hesstau[names(ostats) %in% names(tau)] <- tau
@@ -235,16 +246,17 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
       hess <- .tapered.hessian(sample, hesstau)
       if(is.curved(fit)){
         curved_m <- ergm_model(formula, nw, response=response, ...)
-        curved_m <- .tapered.curved.hessian(hess,fit$coef,curved_m$etamap)
+        curved_m <- .tapered.curved.hessian(hess,fcoef,curved_m$etamap)
         fit$hessian[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- curved_m
+        fit$covar[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- MASS::ginv(curved_m)
       }else{
         fit$hessian <- hess
+        fit$covar <- -MASS::ginv(fit$hessian)
       }
-      fit$covar <- -MASS::ginv(fit$hessian)
     }
-  }else{
-      fit$covar <- -MASS::ginv(fit$hessian)
-  }
+ #}else{
+ #    fit$covar <- -MASS::ginv(fit$hessian)
+ #}
 # fit$tapering.centers <- ostats[as.character(unlist(taper.terms))]
 
   fit$tapering.centers <- taper.stats
@@ -275,6 +287,8 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   
   #second derivative of log likelihoods
   ddll <- diag(rep(0,np))
+  colnames(ddll) <- colnames(sample)
+  rownames(ddll) <- colnames(sample)
   for(i in 1:np){
     for(j in 1:np){
       ddll[i,j] <- -dmu[i,j] - sum(2*coef*dmu[,i]*dmu[,j]) 
@@ -309,7 +323,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
        istat <- istat + length(cm$from) - 1
       }
     }
-    exterms <- grep("Var(",namesch,fixed=TRUE)
+    exterms <- c(grep("Var(",namesch,fixed=TRUE), grep("Taper_Penalty",namesch,fixed=TRUE))
     if(length(exterms)>0){
      ch <- ch[-exterms,-exterms]
      namesch <- namesch[-exterms]

@@ -22,6 +22,7 @@
 #' @param MCMLE.kurtosis.location numeric The mean of the prior for kurtosis and/or the 
 #' taget kurtosis value.
 #' @param MCMLE.kurtosis.scale numeric The standard deviation of the prior for kurtosis.
+#' @param MCMLE.kurtosis.penalty numeric: The size of the penalty for larger values of the tapering parameter on the log-likelihood.
 #' @param MCMLE.kurtosis.equality Logical: If TRUE, constrain the kurtosis in expectation.
 #' @param MCMLE.metric Method to calculate the loglikelihood approximation.
 #' See [control.ergm()] for the standard [ergm()] options. The tapering models add
@@ -49,6 +50,7 @@ control.ergm.tapered<-function(
                        MCMLE.kurtosis.prior=TRUE,
                        MCMLE.kurtosis.location=3.0,
                        MCMLE.kurtosis.scale=0.3,
+                       MCMLE.kurtosis.penalty=2.0,
                        loglik=control.logLik.ergm.tapered(),
                        ...
                        ){
@@ -65,4 +67,4 @@ control.ergm.tapered<-function(
   set.control.class(c("control.ergm", "control.ergm.tapered"))
 }
 
-STATIC_TAPERING_CONTROLS <- c("MCMLE.kurtosis.prior", "MCMLE.kurtosis.location", "MCMLE.kurtosis.scale", "MCMLE.kurtosis.equality")
+STATIC_TAPERING_CONTROLS <- c("MCMLE.kurtosis.prior", "MCMLE.kurtosis.location", "MCMLE.kurtosis.scale", "MCMLE.kurtosis.penalty", "MCMLE.kurtosis.equality")
