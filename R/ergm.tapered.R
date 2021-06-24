@@ -58,7 +58,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
                          response=NULL, constraints=~., reference=~Bernoulli,
                          control = control.ergm.tapered(), fixed=TRUE, verbose=FALSE, eval.loglik=TRUE, ...){
 
-  if(!is(control,"control.ergm.tapered")){
+  if(!methods::is(control,"control.ergm.tapered")){
     stop("The control variable must be of class 'control.ergm.tapered'.")
   }
   # Enforce Kpenalty metric

@@ -18,15 +18,15 @@
 #' 
 #' @templateVar MCMCType MCMC
 #'
-#' @param MCMLE.kurtosis.prior Logical: If TRUE, use a prior for the kurtosis.
+#' @param MCMLE.metric Method to calculate the loglikelihood approximation.
+#' @param MCMC.esteq.exclude.statistics vector vector of names of statistics to exclude from the estimating equations.
 #' @param MCMLE.kurtosis.location numeric The mean of the prior for kurtosis and/or the 
-#' taget kurtosis value.
+#' target kurtosis value.
 #' @param MCMLE.kurtosis.scale numeric The standard deviation of the prior for kurtosis.
 #' @param MCMLE.kurtosis.penalty numeric: The size of the penalty for larger values of the tapering parameter on the log-likelihood.
-#' @param MCMLE.kurtosis.equality Logical: If TRUE, constrain the kurtosis in expectation.
-#' @param MCMLE.metric Method to calculate the loglikelihood approximation.
 #' See [control.ergm()] for the standard [ergm()] options. The tapering models add
 #' \code{} and .
+#' @param loglik list List of additional control arguments for the loglik. See \code{\link{control.logLik.ergm.tapered}}.
 #' @param \dots Additional arguments, passed to other functions This argument
 #' is helpful because it collects any control parameters that have been
 #' deprecated; a warning message is printed in case of deprecated arguments.
@@ -47,7 +47,6 @@ control.ergm.tapered<-function(
                          "EF.Likelihood", "naive",
                          "Kpenalty"),
                        MCMC.esteq.exclude.statistics=NULL,
-                       MCMLE.kurtosis.prior=TRUE,
                        MCMLE.kurtosis.location=3.0,
                        MCMLE.kurtosis.scale=0.3,
                        MCMLE.kurtosis.penalty=2.0,
@@ -67,4 +66,4 @@ control.ergm.tapered<-function(
   set.control.class(c("control.ergm", "control.ergm.tapered"))
 }
 
-STATIC_TAPERING_CONTROLS <- c("MCMLE.kurtosis.prior", "MCMLE.kurtosis.location", "MCMLE.kurtosis.scale", "MCMLE.kurtosis.penalty", "MCMLE.kurtosis.equality")
+STATIC_TAPERING_CONTROLS <- c("MCMLE.kurtosis.location", "MCMLE.kurtosis.scale", "MCMLE.kurtosis.penalty")

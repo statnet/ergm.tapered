@@ -14,15 +14,15 @@
 #' plotted as quantiles of the simulated sample. In a good fit, the observed
 #' statistics should be near the sample median (0.5).
 #'
-#' @param object Either a formula or an \code{tapered.ergm} object.
+#' @param object Either a formula or an \code{ergm.tapered} object.
 #' See documentation for \code{\link{ergm.tapered}}.
-#' An object of class c('tapered.ergm','ergm') contains the fit model. In addition to all of the ergm items, 
+#' An object of class c('ergm.tapered','ergm') contains the fit model. In addition to all of the ergm items, 
 #' this object contains tapering.centers, tapering.coef and orig.formula. tapering.centers are the centers for the tapering term.
 #' tapering.coef are the tapering coefficients = 1/ beta^2. orig.formula is the formula passed into ergm.tapered.
 #' @param \dots Additional arguments, to be passed to lower-level functions.
 #' These are the same as for \code{\link{gof.ergm}} and that documentation should be consulted.
 #' @return \code{\link{gof}}, \code{\link{gof.ergm}}, and
-#' \code{\link{gof.tapered.ergm}} return an object of class \code{tapered.ergm.gof}, which inherits from class `gof`.  This
+#' \code{\link{gof.ergm.tapered}} return an object of class \code{gof.ergm.tapered}, which inherits from class `gof`.  This
 #' is a list of the tables of statistics and \eqn{p}-values.  This is typically
 #' plotted using \code{\link{plot.gof}}.
 #' @seealso [ergm()], [network()], [simulate.ergm()], [summary.ergm()], [gof.ergm()]
@@ -36,7 +36,7 @@
 #' summary(fit)
 #' }
 #' @export
-gof.tapered.ergm <- function(object, ...){
+gof.ergm.tapered <- function(object, ...){
   
   # do some formula magic
 # .taper.coef <- object$tapering.coef
@@ -51,7 +51,7 @@ gof.tapered.ergm <- function(object, ...){
   class(object) <- "ergm"
   gof <- gof(object, ...)
   
-  class(gof) <- c("tapered.ergm.gof", class(gof))
+  class(gof) <- c("gof.ergm.tapered", "gof.ergm",class(gof))
   
   gof
 }

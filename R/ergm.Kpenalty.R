@@ -32,6 +32,9 @@
 #' right-hand side. See \link[=ergm-constraints]{ERGM constraints} 
 #' \code{\link{ergm}} for details.}
 #' @param control An object of class control.ergm. Passed to the ergm function.
+#' @param verbose A `logical`: if this is
+#' \code{TRUE}, the program will print out additional
+#' information about the progress of estimation.
 #' @param eval.loglik {Logical:  If TRUE, evaluate the log-likelihood associated with the fit.}
 #' @param ... Additional arguments to \code{\link{ergm}}.
 #' @returns

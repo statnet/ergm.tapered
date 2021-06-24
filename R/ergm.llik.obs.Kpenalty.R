@@ -1,50 +1,7 @@
-# Version working on the tapering model with just a penalty
-# for Kurtosis and large tau (or small r > 0)
-#' @export
-eq.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
-                     eta0, etamap, 
-                     control.llik=control.ergm.tapered.loglik()
-                     ){
-
-  Kpenalty <- grep("Taper_Penalty",colnames(xsim), fixed=TRUE)
-
-  eta <- ergm.eta(theta, etamap)
-  eta[is.na(eta)] <- 0
-
-  etaparam <- (eta-eta0)
-  basepred <- xsim %*% etaparam
-  maxbase <- max(basepred)
-  lwi <- basepred - (maxbase + log(sum(exp(basepred-maxbase))) )
-  Ek <- colSums(sweep(xsim[,-Kpenalty],1,exp(lwi),"*"))
-  logm2 <- (colSums(sweep(xsim[,-Kpenalty]^2,1,exp(lwi),"*")))
-  logm4 <- (colSums(sweep(xsim[,-Kpenalty]^4,1,exp(lwi),"*")))
-  logm2[is.infinite(logm2) | is.nan(logm2) | is.na(logm2)] <- 1
-  logm4[is.infinite(logm4) | is.nan(logm4) | is.na(logm4)] <- 1
-# kurt <- exp(logm4-2*logm2)
-# kurt <- logm4-2*logm2
-  kurt <- logm4/(logm2*logm2)
-  kurt[is.nan(kurt) | is.na(kurt)] <- 3
-# names(kurt) <- colnames(xsim)[-Kpenalty]
-#print(mean(kurt))
-  penalty <- -0.5*((kurt-control.llik$MCMLE.kurtosis.location)/control.llik$MCMLE.kurtosis.scale)^2
-  penalty <- sum(penalty)
-# cat(sprintf("mean(kurt)=%f, penalty = %9.5g\n",mean(kurt),penalty))
-# a=(c(Ek,kurt-control.llik$MCMLE.kurtosis.location))
-# if(length(a)!=20 | any(is.na(a)) | any(is.nan(a))){browser()}
-# print(as.vector(c(Ek,kurt-control.llik$MCMLE.kurtosis.location)))
-# as.vector(c(Ek,kurt-control.llik$MCMLE.kurtosis.location))
-#if(any(abs(Ek)>100)) {print(Ek);browser();print(str(Ek))}
-#if(any(abs(Ek)>100)) {browser()}
-  c(as.vector(Ek), kurt-control.llik$MCMLE.kurtosis.location)
-  c(Ek, kurt-control.llik$MCMLE.kurtosis.location)
-  mean(kurt)-control.llik$MCMLE.kurtosis.location
-}
-#end
-
 #' @export
 llik.fun.obs.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
-                     control.llik=control.ergm.tapered.loglik()
+                     control.llik=ergm::control.ergm.tapered.loglik()
                      ){
 
   Kpenalty <- grep("Taper_Penalty",colnames(xsim), fixed=TRUE)
@@ -88,34 +45,9 @@ llik.fun.obs.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   Kurt_penalty <- sum(penalty)
 #
   Kurt_penalty_diff <- Kurt_penalty - Kurt_penalty0
-#
-  penalty <- -eta[Kpenalty]^2 + eta0[Kpenalty]^2
-#if(eta[Kpenalty]!=eta0[Kpenalty]) browser()
-# cat(sprintf("llr=%f, penalty = %9.5g\n",llr,penalty))
-  Ek  <-  eta[Kpenalty]*sum(xsim[,Kpenalty]*exp(lwi))
-# Ek0 <- eta0[Kpenalty]*mean(xsim[,Kpenalty])
-  Ek0 <- eta0[Kpenalty]*sum(xsim[,Kpenalty]*exp(lwi))
-  penalty <- Ek - Ek0
   Tpenalty_diff <- eta[Kpenalty] - eta0[Kpenalty]
-# cat(sprintf("llr=%f, Ek = %9.5g, sum = %9.5g, penalty = %9.5g\n",llr,Ek,sum(xsim[,Kpenalty]*exp(lwi)),penalty))
- if(control.llik$MCMLE.dampening.min.ess < 0){
-   cat(sprintf("Kurtosis of statistics:\n"))
-   print(kurt)
-#  cat(sprintf("kurt %f %f \n",kurt[1], kurt[2]))
-   cat(sprintf("eta = %9.5g, eta0 = %9.5g, Kurt_penalty = %9.5g, Kurt_penalty0 = %9.5g\n",
-               eta[Kpenalty],eta0[Kpenalty],Kurt_penalty,Kurt_penalty0))
-   cat(sprintf("MCMLE.kurtosis.location %f MCMLE.kurtosis.scale %f llr=%f, Kurt_penalty_diff = %9.5g, Tpenalty_diff = %9.5g\n",control.llik$MCMLE.kurtosis.location,control.llik$MCMLE.kurtosis.scale,llr,
-               Kurt_penalty_diff,Tpenalty_diff))
- }
 #
   llr <- llr + 2*Tpenalty_diff + Kurt_penalty_diff
-# llr <- llr + Ek
-# logm4[is.infinite(logm4) | is.nan(logm4) | is.na(logm4)] <- 0
-# kurt <- exp(logm4-2*logm2)
-# kurt[is.nan(kurt) | is.na(kurt)] <- 3
-# names(kurt) <- colnames(xsim)[Var.xsim]
-# penalty <- -0.5*((kurt[-Var.xsim]-control.llik$MCMLE.kurtosis.location)/control.llik$MCMLE.kurtosis.scale)^2
-# penalty <- sum(penalty)
 
   # Simplistic error control;  -800 is effectively like -Inf:
   if(is.infinite(llr) | is.na(llr)){llr <- -800}
@@ -131,158 +63,26 @@ llik.fun.obs.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
     return(llr)
   }
 }
-#' @export
-llik.grad.obs.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
-                     eta0, etamap, 
-                     control.llik=control.ergm.tapered.loglik()
-                     ){
-
-  Var.xsim <- grep("Var(",colnames(xsim), fixed=TRUE)
-# Standardize the Var and M4 against original
-  Kurt.xsim.stats <- substr(colnames(xsim)[Var.xsim],5,nchar(colnames(xsim)[Var.xsim])-1)
-  Kurt.xsim.stats <- match(Kurt.xsim.stats,colnames(xsim))
-  xsim[,Var.xsim] <- xsim[,Kurt.xsim.stats]^2
-  # Obtain canonical parameters incl. offsets and difference from sampled-from
-  eta <- ergm.eta(theta, etamap)
-  etaparam <- eta-eta0
-
-  # Calculate log-importance-weights (unconstrained)
-  basepred <- xsim %*% etaparam + lrowweights(xsim)
-
-  # Calculate log-importance-weights (constrained)
-  obspred <- xsim.obs %*% etaparam + lrowweights(xsim.obs)
-
-  llg <- lweighted.mean(xsim.obs, obspred) - lweighted.mean(xsim, basepred)
-  llg <- t(ergm.etagradmult(theta, llg, etamap))
-
-  llg[is.na(llg)] <- 0
-
-  # Return negative grad
-  llg
-}
-
-#' @export
-eq.jacobian.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
-                     eta0, etamap, 
-                     control.llik=control.ergm.tapered.loglik()
-                     ){
-
-  Var.xsim <- grep("Var(",colnames(xsim), fixed=TRUE)
-  npar <- length(Var.xsim)
-# Standardize the Var and M4 against original
-  Kurt.xsim.stats <- substr(colnames(xsim)[Var.xsim],5,nchar(colnames(xsim)[Var.xsim])-1)
-  Kurt.xsim.stats <- match(Kurt.xsim.stats,colnames(xsim))
-  xsim[,Var.xsim] <- xsim[,Kurt.xsim.stats]^2
-
-  Ki <- control.llik$MCMLE.kurtosis.location
-
-  eta <- ergm.eta(theta, etamap)
-  eta[is.na(eta)] <- 0
-
-  etaparam <- (eta-eta0)
-  basepred <- xsim %*% etaparam
-  maxbase <- max(basepred)
-  lwi <- basepred - (maxbase + log(sum(exp(basepred-maxbase))) )
-#
-  Ek <- colSums(sweep(xsim,1,exp(lwi),"*"))
-  t2 <- sweep(sweep(xsim,2,Ek,"-"),1,exp(lwi),"*")
-  jac_Var <- t(xsim[,Var.xsim]) %*% t2
-  jac_M4  <- t(xsim[,Var.xsim]^2) %*% t2
-  jac0   <-  t(xsim[,Kurt.xsim.stats]) %*% t2
-  jac <- rbind(jac0, jac_M4-2*jac_Var)
-  jac[is.na(jac) | is.nan(jac)] <- 0
-# obs
-  xsim.obs[,Var.xsim] <- xsim.obs[,Kurt.xsim.stats]^2
-
-  basepred <- xsim.obs %*% etaparam
-  maxbase <- max(basepred)
-  lwi <- basepred - (maxbase + log(sum(exp(basepred-maxbase))) )
-#
-  Ek <- colSums(sweep(xsim.obs,1,exp(lwi),"*"))
-  t2 <- sweep(sweep(xsim.obs,2,Ek,"-"),1,exp(lwi),"*")
-  jac_Var <- t(xsim.obs[,Var.xsim]) %*% t2
-  jac_M4  <- t(xsim.obs[,Var.xsim]^2) %*% t2
-  jac0   <-  t(xsim.obs[,Kurt.xsim.stats]) %*% t2
-# Combine the xsim and xsim.obs
-  jac <- jac - rbind(jac0, jac_M4-2*jac_Var)
-  jac
-}
-
-#' @export
-llik.hessian.obs.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
-                     eta0, etamap, 
-                     control.llik=control.ergm.tapered.loglik()
-                     ){
-
-  Var.xsim <- grep("Var(",colnames(xsim), fixed=TRUE)
-  M4.xsim <-  grep("M4(", colnames(xsim), fixed=TRUE)
-  Kurt.xsim <- c(Var.xsim,M4.xsim)
-  eta0 <- eta0[seq_along(theta)]
-
-  # Obtain canonical parameters incl. offsets and difference from sampled-from
-  eta <- ergm.eta(theta, etamap)
-  etaparam <- eta-eta0
-  etaparam[Kurt.xsim] <- 0
-
-  # Calculate log-importance-weights (unconstrained)
-  basepred <- xsim %*% etaparam + lrowweights(xsim)
-
-  # Calculate log-importance-weights (constrained)
-  obspred <- xsim.obs %*% etaparam + lrowweights(xsim.obs)
-
-  # Calculate the estimating function values sans offset
-  esim <- t(ergm.etagradmult(theta, t(xsim), etamap))
-  esim[,Kurt.xsim] <- 0
-  osim <- t(ergm.etagradmult(theta, t(xsim.obs), etamap))
-  osim[,Kurt.xsim] <- 0
-
-  # Weighted variance-covariance matrix of estimating functions ~ -Hessian
-  H <- lweighted.var(osim, obspred) - lweighted.var(esim, basepred)
-
-  dimnames(H) <- list(names(theta), names(theta))
-  H
-}
-
-#' @export
-llik.hessian.obs.Kpenalty.numDeriv <- function(theta, xsim, xsim.obs=NULL,
-                     eta0, etamap, 
-                     control.llik=control.ergm.tapered.loglik()
-                     ){
-H <-  numDeriv::hessian(llik.fun.obs.Kpenalty,theta,
-                 xsim=xsim, xsim.obs=xsim.obs,
-                 eta0=eta0, etamap=etamap,
-                 control.llik=control.llik
-                 )
-# cnames <- names(theta)
-# M4.names <- cnames[grep("offset(M4(",cnames,fixed=TRUE)]
-# var.names <- sapply(strsplit(substr(M4.names,start=11,stop=1000),")",fixed=TRUE),
-#                     function(x){x[1]})
-# cnames <- match(var.names,cnames)
-# H[-cnames,] <- 0
-# H[,-cnames] <- 0
-# diag(H)[-cnames] <- 1
-H
-}
 
 # Numerical versions
 #' @export
-llik.grad.obs.Kpenalty.numDeriv <- function(theta, xsim, xsim.obs=NULL,
+llik.hessian.obs.Kpenalty.numDeriv <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
-                     control.llik=control.ergm.tapered.loglik()
+                     control.llik=ergm::control.ergm.tapered.loglik()
                      ){
-  numDeriv::grad(llik.fun.obs.Kpenalty,theta,
+  numDeriv::hessian(llik.fun.obs.Kpenalty,theta,
                  xsim=xsim, xsim.obs=xsim.obs,
                  eta0=eta0, etamap=etamap,
                  control.llik=control.llik
                  )
 }
+
 #' @export
-eq.jacobian.obs.Kpenalty.numDeriv <- function(theta, xsim, xsim.obs=NULL,
+llik.grad.obs.Kpenalty.numDeriv <- function(theta, xsim, xsim.obs=NULL,
                      eta0, etamap, 
-                     control.llik=control.ergm.tapered.loglik()
+                     control.llik=ergm::control.ergm.tapered.loglik()
                      ){
-# numDeriv::jacobian(eq.fun.Kpenalty,theta,
-  nloptr::nl.jacobian(x0=theta,fn=eq.fun.obs.Kpenalty,
+  numDeriv::grad(llik.fun.obs.Kpenalty,theta,
                  xsim=xsim, xsim.obs=xsim.obs,
                  eta0=eta0, etamap=etamap,
                  control.llik=control.llik

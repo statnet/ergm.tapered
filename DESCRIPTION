@@ -1,8 +1,8 @@
 Package: ergm.tapered
 Type: Package
 Title: Tapered Exponential-Family Models for Networks
-Version: 1.1-0
-Date: 2020-01-19
+Version: 4.0-0
+Date: 2021-06-22
 Authors@R: c(
 	  person("Mark S.", "Handcock", role=c("aut","cre"), email="handcock@stat.ucla.edu"),
 	  person("Pavel N.", "Krivitsky", role=c("aut"), email="pavel@uow.edu.au"),
@@ -12,10 +12,12 @@ Description: A set of terms and functions implementing Tapered exponential-famil
     behavior.
 LinkingTo: ergm
 Depends:
-    ergm (>= 4.0),
+    ergm (>= 4.0.2),
     network
 Imports:
-    statnet.common (>= 4.3),
+    statnet.common (>= 4.5),
+    methods,
+    numDeriv,
     MASS
 License: GPL-3
 Roxygen: list(markdown = TRUE)

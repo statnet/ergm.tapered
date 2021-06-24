@@ -7,8 +7,7 @@
 #' 
 #' @aliases print.summary.ergm.tapered
 #' @param object an object of class \code{"ergm.tapered"}, usually, a result
-#'   of a call to \code{\link{ergm.tapered}} or \code{\link{ergm.kurtosis}}.
-#' @param digits Significant digits for coefficients
+#'   of a call to \code{\link{ergm.tapered}}.
 #' @param correlation logical; if \code{TRUE}, the correlation matrix
 #'   of the estimated parameters is returned and printed.
 #' @param covariance logical; if \code{TRUE}, the covariance matrix of
@@ -19,7 +18,7 @@
 #'   only the likelihood varuation is used. The \eqn{p}-values are
 #'   based on this source of variation.
 #' @param \dots Arguments to \code{\link{logLik.ergm}}
-#' @return The function \code{\link{summary.ergm}} computes and
+#' @return The function \code{\link{summary.ergm.tapered}} computes and
 #'   returns a list of summary statistics of the fitted
 #'   \code{\link{ergm}} model given in \code{object}. Note that for
 #'   backwards compatibility, it returns two coefficient tables:
@@ -44,7 +43,7 @@ summary.ergm.tapered <- function (object, ...,
                           correlation=FALSE, covariance=FALSE,
                           total.variation=TRUE)
 {
-  if("digits" %in% names(list(...))) warn("summary.ergm() no longer takes a digits= argument.")
+  if("digits" %in% names(list(...))) warning("summary.ergm.tapered() no longer takes a digits= argument.")
   
   control <- object$control
   pseudolikelihood <- object$estimate=="MPLE"

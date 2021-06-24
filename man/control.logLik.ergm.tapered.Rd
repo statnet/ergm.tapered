@@ -8,29 +8,25 @@ control.logLik.ergm.tapered(
   MCMLE.metric = c("lognormal", "logtaylor", "Median.Likelihood", "EF.Likelihood",
     "naive", "Kpenalty"),
   MCMC.esteq.exclude.statistics = NULL,
-  MCMLE.kurtosis.prior = TRUE,
   MCMLE.kurtosis.location = 3,
   MCMLE.kurtosis.scale = 0.3,
   MCMLE.kurtosis.penalty = 2,
-  MCMLE.kurtosis.equality = FALSE,
   ...
 )
 }
 \arguments{
-\item{MCMLE.metric}{Method to calculate the loglikelihood approximation.
-See \code{\link[=control.ergm]{control.ergm()}} for the standard \code{\link[=ergm]{ergm()}} options. The tapering models add
-\code{} and .}
+\item{MCMLE.metric}{Method to calculate the loglikelihood approximation.}
 
-\item{MCMLE.kurtosis.prior}{Logical: If TRUE, use a prior for the kurtosis.}
+\item{MCMC.esteq.exclude.statistics}{vector vector of names of statistics to exclude from the estimating equations.}
 
 \item{MCMLE.kurtosis.location}{numeric The mean of the prior for kurtosis and/or the
 taget kurtosis value.}
 
 \item{MCMLE.kurtosis.scale}{numeric The standard deviation of the prior for kurtosis.}
 
-\item{MCMLE.kurtosis.penalty}{numeric: The size of the penalty for larger values of the tapering parameter on the log-likelihood.}
-
-\item{MCMLE.kurtosis.equality}{Logical: If TRUE, constrain the kurtosis in expectation.}
+\item{MCMLE.kurtosis.penalty}{numeric: The size of the penalty for larger values of the tapering parameter on the log-likelihood.
+See \code{\link[=control.ergm]{control.ergm()}} for the standard \code{\link[=ergm]{ergm()}} options. The tapering models add
+\code{} and .}
 
 \item{\dots}{Additional arguments, passed to other functions This argument
 is helpful because it collects any control parameters that have been

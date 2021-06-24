@@ -17,13 +17,12 @@
 #' 
 #' @templateVar MCMCType MCMC
 #'
-#' @param MCMLE.kurtosis.prior Logical: If TRUE, use a prior for the kurtosis.
+#' @param MCMLE.metric Method to calculate the loglikelihood approximation.
+#' @param MCMC.esteq.exclude.statistics vector vector of names of statistics to exclude from the estimating equations.
 #' @param MCMLE.kurtosis.location numeric The mean of the prior for kurtosis and/or the 
 #' taget kurtosis value.
 #' @param MCMLE.kurtosis.scale numeric The standard deviation of the prior for kurtosis.
 #' @param MCMLE.kurtosis.penalty numeric: The size of the penalty for larger values of the tapering parameter on the log-likelihood.
-#' @param MCMLE.kurtosis.equality Logical: If TRUE, constrain the kurtosis in expectation.
-#' @param MCMLE.metric Method to calculate the loglikelihood approximation.
 #' See [control.ergm()] for the standard [ergm()] options. The tapering models add
 #' \code{} and .
 #' @param \dots Additional arguments, passed to other functions This argument
@@ -46,11 +45,9 @@ control.logLik.ergm.tapered<-function(
                          "EF.Likelihood", "naive",
                          "Kpenalty"),
                        MCMC.esteq.exclude.statistics=NULL,
-                       MCMLE.kurtosis.prior=TRUE,
                        MCMLE.kurtosis.location=3.0,
                        MCMLE.kurtosis.scale=0.3,
                        MCMLE.kurtosis.penalty=2.0,
-                       MCMLE.kurtosis.equality=FALSE,
                        ...
                        ){
   formal.args<-formals(sys.function())
@@ -65,3 +62,5 @@ control.logLik.ergm.tapered<-function(
 
   set.control.class("control.logLik.ergm")
 }
+NO_LOGLIK_MESSAGE <- paste0("Log-likelihood was not estimated for this fit. To get deviances, AIC, and/or BIC, use ",sQuote("*fit* <-logLik(*fit*, add=TRUE)")," to add it to the object or rerun this function with eval.loglik=TRUE.")
+NO_NULL_IMPLICATION <- "This means that all likelihood-based inference (LRT, Analysis of Deviance, AIC, BIC, etc.) is only valid between models with the same reference distribution and constraints."
