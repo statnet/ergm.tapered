@@ -144,7 +144,7 @@ ergm.Kpenalty <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NU
          family=family, taper.terms=otaper.terms,
          response=response, constraints=constraints, reference=reference,
          control = tcontrol, eval.loglik=FALSE, verbose=FALSE, ...)
-    control$init <- tfit$coef
+    control$init <- coef(tfit)
   }
 
   taper_terms <- switch(family,

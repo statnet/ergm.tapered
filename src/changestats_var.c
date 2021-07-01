@@ -8,7 +8,7 @@ C_CHANGESTAT_FN(c_var_term){
   double *nws = INPUT_PARAM; // The network statistics are up first
 
   Model *m = storage->m;
-  ChangeStats1(tail, head, nwp, m, edgeflag);
+  ChangeStats1(tail, head, nwp, m, edgestate);
   
   // Copy the change statistics to CHANGE_STAT
   memcpy(CHANGE_STAT, m->workspace, (N_CHANGE_STATS)*sizeof(double));

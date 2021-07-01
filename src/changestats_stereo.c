@@ -9,7 +9,7 @@ C_CHANGESTAT_FN(c_stereo_term){
   double new_s, cur_s;
 
   Model *m = storage->m;
-  ChangeStats1(tail, head, nwp, m, edgeflag);
+  ChangeStats1(tail, head, nwp, m, edgestate);
   
   memcpy(CHANGE_STAT, m->workspace, (N_CHANGE_STATS-1)*sizeof(double));
 

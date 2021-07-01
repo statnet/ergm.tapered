@@ -23,7 +23,7 @@
 #'   \code{\link{ergm}} model given in \code{object}. Note that for
 #'   backwards compatibility, it returns two coefficient tables:
 #'   `$coefs` which does not contain the z-statistics and
-#'   `$coefficeints` which does (and is therefore more similar to
+#'   `$coefficients` which does (and is therefore more similar to
 #'   those returned by [summary.lm()]).
 #' @seealso network, ergm, print.ergm.  The model fitting function
 #'   \code{\link{ergm}}, \code{\link{summary}}.
@@ -35,8 +35,8 @@
 #' 
 #'  data(florentine)
 #' 
-#'  x <- ergm(flomarriage ~ density)
-#'  summary(x)
+#'  fit <- ergm.tapered(flomarriage ~ density)
+#'  summary(fit)
 #' 
 #' @export
 summary.ergm.tapered <- function (object, ..., 
@@ -49,9 +49,9 @@ summary.ergm.tapered <- function (object, ...,
   pseudolikelihood <- object$estimate=="MPLE"
   independence <- NVL(object$MPLE_is_MLE, is.dyad.independent(object))
   
-  if(any(is.na(object$coef)) & !is.null(object$mplefit)){
-     object$coef[is.na(object$coef)] <-
-     object$mplefit$coef[is.na(object$coef)]
+  if(any(is.na(stats::coef(object))) & !is.null(object$mplefit)){
+     stats::coef(object)[is.na(stats::coef(object))] <-
+     stats::coef(object$mplefit)[is.na(stats::coef(object))]
   }
 
   nodes<- network.size(object$network)
@@ -107,7 +107,7 @@ summary.ergm.tapered <- function (object, ...,
   
   nodes<- network.size(object$network)
   dyads<- sum(as.rlebdm(object$constrained, object$constrained.obs, which="informative"))
-  df <- length(object$coef[cnames])
+  df <- length(stats::coef(object)[cnames])
 
   asycov <- vcov(object, sources=if(total.variation) "all" else "model")[cnames,cnames]
 # asycov <- vcov(object, sources="estimation")[cnames,cnames]
@@ -127,12 +127,12 @@ summary.ergm.tapered <- function (object, ...,
   }
 
   rdf <- dyads - df
-  zval <- object$coef[cnames] / asyse
+  zval <- stats::coef(object)[cnames] / asyse
   pval <- 2 * pnorm(q=abs(zval), lower.tail=FALSE)
   
   count <- 1
   coefmat <- cbind(
-    `Estimate` = coef(object)[cnames],
+    `Estimate` = stats::coef(object)[cnames],
     `Std. Error` = asyse,
     `MCMC %` = est.pct,
     `z value` = zval,
@@ -183,12 +183,12 @@ summary.ergm.tapered <- function (object, ...,
   ans$r <- object$r
   a <- grep("Taper_Penalty",cnames.all,fixed=TRUE)
   if(length(a)>0){
-    ans$Taper_Penalty <- object$coef[a]
+    ans$Taper_Penalty <- stats::coef(object)[a]
     ans$r <- object$r/sqrt(3*exp(log(2)*(ans$Taper_Penalty-2))/(1+exp(log(2)*(ans$Taper_Penalty-2))))
   }
   a <- grep("Var(",cnames.all,fixed=TRUE)
   if(length(a)>0){
-    a <- -1/(object$coef[a]*pmax(1,object$tapering.centers))
+    a <- -1/(stats::coef(object)[a]*pmax(1,object$tapering.centers))
     a[is.nan(a) | a < 0] <- 0
     ans$r <- mean(sqrt(a))
   }

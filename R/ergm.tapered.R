@@ -151,7 +151,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
          family=family, taper.terms=otaper.terms,
          response=response, constraints=constraints, reference=reference,
          control = tcontrol, eval.loglik=FALSE, verbose=FALSE, ...)
-    control$init <- tfit$coef
+    control$init <- coef(tfit)
   }
 
   taper_terms <- switch(paste0(family,ifelse(fixed,"_fixed","_notfixed")),
@@ -229,12 +229,12 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     if(fixed){
       sample <- as.matrix(fit$sample)[,1:npar,drop=FALSE]
       fit$hessian <- fit$hessian[1:npar,1:npar]
-      fcoef <- fit$coef[1:npar]
+      fcoef <- coef(fit)[1:npar]
     }else{
       sample <- as.matrix(fit$sample)[,1:npar,drop=FALSE]
     # fit$hessian <- fit$hessian[1:npar,1:npar]
     # fit$hessian <- -fit$hessian
-      fcoef <- fit$coef[1:npar]
+      fcoef <- coef(fit)[1:npar]
     }
     colnames(sample) <- names(ostats)
     

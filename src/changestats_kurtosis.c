@@ -8,7 +8,7 @@ C_CHANGESTAT_FN(c_kurt_term){
   double *nws = INPUT_PARAM + N_CHANGE_STATS; // Skip the penalty coefficients.
 
   Model *m = storage->m;
-  ChangeStats1(tail, head, nwp, m, edgeflag);
+  ChangeStats1(tail, head, nwp, m, edgestate);
   
   memcpy(CHANGE_STAT, m->workspace, (N_CHANGE_STATS)*sizeof(double));
 

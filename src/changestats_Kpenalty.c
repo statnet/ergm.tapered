@@ -9,7 +9,7 @@ C_CHANGESTAT_FN(c_Kpenalty_term){
      // The penalty term adds an extra change statistic (for the -1)
 
   Model *m = storage->m;
-  ChangeStats1(tail, head, nwp, m, edgeflag);
+  ChangeStats1(tail, head, nwp, m, edgestate);
   
   // Copy the change statistics to CHANGE_STAT
   memcpy(CHANGE_STAT, m->workspace, (N_CHANGE_STATS-1)*sizeof(double));

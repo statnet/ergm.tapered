@@ -8,7 +8,7 @@ WtC_CHANGESTAT_FN(c_wttaper_term){
   double *nws = INPUT_PARAM + N_CHANGE_STATS - 1; // Skip the penalty coefficients.
 
   WtModel *m = storage->m;
-  WtChangeStats1(tail, head, weight, nwp, m, edgeweight);
+  WtChangeStats1(tail, head, weight, nwp, m, edgestate);
   
   memcpy(CHANGE_STAT, m->workspace, (N_CHANGE_STATS-1)*sizeof(double));
 
