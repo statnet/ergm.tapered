@@ -8,10 +8,10 @@
 #  Copyright 2003-2021 Statnet Commons
 ################################################################################
 
-#' @rdname summary.ergm
+#' @rdname summary.ergm.tapered
 #' @order 2
 #' 
-#' @param x object of class `summary.ergm.tapered` returned by [summary.ergm()].
+#' @param x object of class `summary.ergm.tapered` returned by [summary.ergm.tapered()].
 #' @param digits significant digits for coefficients
 #' @param signif.stars whether to print dots and stars to signify
 #'   statistical significance. See [print.summary.lm()].

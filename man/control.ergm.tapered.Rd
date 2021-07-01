@@ -43,8 +43,7 @@ Auxiliary function as user interface for fine-tuning 'ergm' fitting
 for tapered models.
 }
 \details{
-This function is only used within a call to the \code{\link[=ergm.tapered]{ergm.tapered()}}
-or \code{\link[=ergm.Kpenalty]{ergm.Kpenalty()}} functions.
+This function is only used within a call to the \code{\link[=ergm.tapered]{ergm.tapered()}} function.
 See the \code{usage} section in \code{\link[=ergm]{ergm()}} for details.
 }
 \references{

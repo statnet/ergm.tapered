@@ -33,10 +33,9 @@
 #' @keywords regression models
 #' @examples
 #' 
-#'  data(florentine)
-#' 
-#'  fit <- ergm.tapered(flomarriage ~ density)
-#'  summary(fit)
+#' data(sampson)
+#' fit <- ergm.tapered(samplike ~ edges + triangles())
+#' summary(fit)
 #' 
 #' @export
 summary.ergm.tapered <- function (object, ..., 

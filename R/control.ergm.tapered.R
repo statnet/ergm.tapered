@@ -12,8 +12,7 @@
 #' Auxiliary function as user interface for fine-tuning 'ergm' fitting
 #' for tapered models.
 #' 
-#' This function is only used within a call to the [ergm.tapered()] 
-#' or [ergm.Kpenalty()] functions.
+#' This function is only used within a call to the [ergm.tapered()] function.
 #' See the \code{usage} section in [ergm()] for details.
 #' 
 #' @templateVar MCMCType MCMC
