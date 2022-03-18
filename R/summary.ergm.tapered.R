@@ -17,6 +17,9 @@
 #'   the likelihood variation and the MCMC variation. If \code{FALSE}
 #'   only the likelihood varuation is used. The \eqn{p}-values are
 #'   based on this source of variation.
+#' @param extended logical; if \code{TRUE}, the natural parameters of the tapered terms
+#' are printed as an appended column of the summary table. Also printed are the bias
+#' in the parameter values due to the tapering
 #' @param \dots Arguments to \code{\link{logLik.ergm}}
 #' @return The function \code{\link{summary.ergm.tapered}} computes and
 #'   returns a list of summary statistics of the fitted
@@ -40,7 +43,7 @@
 #' @export
 summary.ergm.tapered <- function (object, ..., 
                           correlation=FALSE, covariance=FALSE,
-                          total.variation=TRUE)
+                          total.variation=TRUE, extended=FALSE)
 {
   if("digits" %in% names(list(...))) warning("summary.ergm.tapered() no longer takes a digits= argument.")
   
@@ -61,6 +64,7 @@ summary.ergm.tapered <- function (object, ...,
 
   ans <- list(formula=object$formula,
               correlation=correlation,
+              extended = extended,
               degeneracy.value = object$degeneracy.value,
               offset = object$offset[cnames],
               drop = NVL(object$drop[cnames], rep(0,length(object$offset[cnames]))),
@@ -68,6 +72,8 @@ summary.ergm.tapered <- function (object, ...,
               covariance=covariance,
               pseudolikelihood=pseudolikelihood,
               independence=independence,
+              tapering.coef=object$tapering.coef,
+              taudelta.mean=object$taudelta.mean,
               estimate=object$estimate,
               control=object$control)
   
@@ -191,6 +197,7 @@ summary.ergm.tapered <- function (object, ...,
     a[is.nan(a) | a < 0] <- 0
     ans$r <- mean(sqrt(a))
   }
+
   class(ans) <- "summary.ergm.tapered"
   ans
 }

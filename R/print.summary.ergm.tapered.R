@@ -36,7 +36,7 @@
 #' @export
 print.summary.ergm.tapered <- function (x, 
               digits = max(3, getOption("digits") - 3),
-              correlation=x$correlation, covariance=x$covariance,
+              correlation=x$correlation, covariance=x$covariance, extended=x$extended,
               signif.stars= getOption("show.signif.stars"),
               eps.Pvalue=0.0001, print.formula=FALSE, print.fitinfo=TRUE, print.coefmat=TRUE, print.message=TRUE, print.deviances=TRUE, print.drop=TRUE, print.offset=TRUE, print.call=TRUE,...){
   
@@ -56,9 +56,16 @@ print.summary.ergm.tapered <- function (x,
   }
 
   if(print.coefmat){
-    printCoefmat(coef(x), digits=digits, signif.stars=signif.stars,
+    if(extended == TRUE){
+     coef.x <- cbind(coef(x)[,1:2], tau=x$tapering.coef, bias=as.numeric(sprintf("%.4f", -x$taudelta.mean)), coef(x)[,4:5])
+    #digits <- c(3,3,3,3,3,3)
+    }else{
+     coef.x <- coef(x)
+    #digits <- c(3,3,3,3)
+    }
+    printCoefmat(coef.x, digits=digits, signif.stars=signif.stars,
                  P.values=TRUE, has.Pvalue=TRUE, na.print="NA",
-                 eps.Pvalue=eps.Pvalue, cs.ind=1:2, tst.ind=4L,...)
+                 eps.Pvalue=eps.Pvalue, cs.ind=c(1:2,4), tst.ind=5L,...)
   }
 
   writeLines(c(strwrap(paste0("The estimated tapering scaling factor is ", format(x$r, digits = digits),".")),''))

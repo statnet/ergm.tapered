@@ -217,6 +217,10 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   }
 
   # fit ergm
+  fit.MPLE.control <- control
+  fit.MPLE.control$init <- NULL
+  fit.MPLE <- ergm(formula, control=fit.MPLE.control, estimate="MPLE",
+                   response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
   if(is.null(target.stats)){
     fit <- ergm(newformula, control=control,
                 response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
@@ -265,6 +269,10 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   fit$tapering.coef <- tau
   fit$r <- r
   fit$orig.formula <- formula
+
+  fit$taudelta.mean <- apply((2*fit.MPLE$glm$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fit$tapering.coef,"*"),2,weighted.mean,weight=fit.MPLE$glm$prior.weights)
+  fit$taudelta.median <- apply((2*fit.MPLE$glm$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fit$tapering.coef,"*"),2,wtd.median,weight=fit.MPLE$glm$prior.weights)
+
   class(fit) <- c("ergm.tapered",family,class(fit))
   
 # fit$covar <- fit$est.cov

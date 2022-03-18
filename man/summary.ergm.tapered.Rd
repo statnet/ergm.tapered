@@ -11,6 +11,7 @@
   digits = max(3, getOption("digits") - 3),
   correlation = x$correlation,
   covariance = x$covariance,
+  extended = x$extended,
   signif.stars = getOption("show.signif.stars"),
   eps.Pvalue = 1e-04,
   print.formula = FALSE,
@@ -29,7 +30,8 @@
   ...,
   correlation = FALSE,
   covariance = FALSE,
-  total.variation = TRUE
+  total.variation = TRUE,
+  extended = FALSE
 )
 }
 \arguments{
@@ -42,6 +44,10 @@ of the estimated parameters is returned and printed.}
 
 \item{covariance}{logical; if \code{TRUE}, the covariance matrix of
 the estimated parameters is returned and printed.}
+
+\item{extended}{logical; if \code{TRUE}, the natural parameters of the tapered terms
+are printed as an appended column of the summary table. Also printed are the bias
+in the parameter values due to the tapering}
 
 \item{signif.stars}{whether to print dots and stars to signify
 statistical significance. See \code{\link[=print.summary.lm]{print.summary.lm()}}.}
