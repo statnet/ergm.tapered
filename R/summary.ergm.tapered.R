@@ -72,8 +72,10 @@ summary.ergm.tapered <- function (object, ...,
               covariance=covariance,
               pseudolikelihood=pseudolikelihood,
               independence=independence,
-              tapering.coef=object$tapering.coef,
+              tapering.coefficients=object$tapering.coefficients,
               taudelta.mean=object$taudelta.mean,
+              taudelta.mad=object$taudelta.mad,
+              taudelta.offset=object$taudelta.offset,
               estimate=object$estimate,
               control=object$control)
   

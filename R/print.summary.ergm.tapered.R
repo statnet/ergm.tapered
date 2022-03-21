@@ -57,7 +57,8 @@ print.summary.ergm.tapered <- function (x,
 
   if(print.coefmat){
     if(extended == TRUE){
-     coef.x <- cbind(coef(x)[,1:2], tau=x$tapering.coef, bias=as.numeric(sprintf("%.4f", -x$taudelta.mean)), coef(x)[,4:5])
+     coef.x <- cbind(coef(x)[,1:2], tau=x$tapering.coefficients, bias=as.numeric(sprintf("%.4f", -x$taudelta.mean)), coef(x)[,4:5])
+    #coef.x <- cbind(coef(x)[,1:2], tau=x$tapering.coefficients, bias=as.numeric(sprintf("%.4f", x$taudelta.offset+x$taudelta.mad)), coef(x)[,4:5])
     #digits <- c(3,3,3,3,3,3)
     }else{
      coef.x <- coef(x)

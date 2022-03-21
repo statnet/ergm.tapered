@@ -79,10 +79,6 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
 
   if(is.null(tapering.centers)) tapering.centers <- target.stats
 
-  if(is.null(tapering.centers))
-    ostats <- summary(formula, response=response, ...)
-  else
-    ostats <- tapering.centers
   
   # set tapering terms
   if(is.character(taper.terms) & length(taper.terms)==1){
@@ -93,19 +89,27 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
      taper.terms <- NULL
      for(i in seq_along(tmp)){if(a[i]){taper.terms <- c(taper.terms,tmp[[i]])}}
      taper_formula <- append_rhs.formula(~.,taper.terms)
+     trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,taper.terms){all(term != taper.terms)}, taper.terms))
+     reformula <- append_rhs.formula(trimmed_formula,taper_formula, environment()) 
    }else{if(taper.terms=="all"){
      taper.terms <- list_rhs.formula(formula)
      taper_formula <- append_rhs.formula(~.,taper.terms)
+     trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,taper.terms){all(term != taper.terms)}, taper.terms))
+     reformula <- formula
    }else{
     if(!inherits(taper.terms,"formula")){
       stop('taper.terms must be "dependent", "all" or a formula of terms.')
     }
     taper.terms <- list_rhs.formula(taper.terms)
     taper_formula <- append_rhs.formula(~.,taper.terms)
+    trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,taper.terms){all(term != taper.terms)}, taper.terms))
+    reformula <- append_rhs.formula(trimmed_formula,taper_formula, environment()) 
    }}
   }else{
     taper_formula <- taper.terms
     taper.terms <- list_rhs.formula(taper.terms)
+    trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,taper.terms){all(term != taper.terms)}, taper.terms))
+    reformula <- append_rhs.formula(trimmed_formula,taper_formula, environment()) 
   }
   taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms), response=response, ...)
 
@@ -132,7 +136,6 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
         1 / beta^2
       }}else{tau}}
   )
-  npar <- length(ostats)
   if(family=="stereo"){
     names(tau) <- "stereo"
   }else{
@@ -182,9 +185,18 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
 	       )
 
   }else{
-    trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,t.terms){all(term != taper.terms)}, taper.terms))
     newformula <- append_rhs.formula(trimmed_formula,taper_terms, environment()) 
   }
+  ostats <- summary(reformula, response=response, ...)
+  if(!is.null(tapering.centers)){
+    tmp <- match(names(ostats), names(tapering.centers))
+    if(any(is.na(tmp))){
+      stop(paste("tapering.centers needs to have a named center for each statistic in the model:",
+           names(ostats)))
+    }
+    ostats <- tapering.centers[tmp]
+  }
+  npar <- length(ostats)
 
   env <- new.env(parent=environment(formula))
   env$.taper.center <- taper.stats
@@ -219,7 +231,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   # fit ergm
   fit.MPLE.control <- control
   fit.MPLE.control$init <- NULL
-  fit.MPLE <- ergm(formula, control=fit.MPLE.control, estimate="MPLE",
+  fit.MPLE <- ergm(reformula, control=fit.MPLE.control, estimate="MPLE",
                    response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
   if(is.null(target.stats)){
     fit <- ergm(newformula, control=control,
@@ -244,8 +256,8 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     
     if(is.null(tapering.centers)){
       hesstau <- ostats - ostats
-  #   hesstau[names(ostats) %in% names(tau)] <- tau
       nm <- match(names(ostats),names(tau))
+  #   hesstau[names(ostats) %in% names(tau)] <- tau
       hesstau[seq_along(hesstau)[!is.na(nm)]] <- tau[nm[!is.na(nm)]]
       hess <- .tapered.hessian(sample, hesstau)
       if(is.curved(fit)){
@@ -270,8 +282,15 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   fit$r <- r
   fit$orig.formula <- formula
 
-  fit$taudelta.mean <- apply((2*fit.MPLE$glm$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fit$tapering.coef,"*"),2,weighted.mean,weight=fit.MPLE$glm$prior.weights)
-  fit$taudelta.median <- apply((2*fit.MPLE$glm$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fit$tapering.coef,"*"),2,wtd.median,weight=fit.MPLE$glm$prior.weights)
+  fulltau <- fcoef - fcoef
+  nm <- match(names(fcoef),names(tau))
+# fulltau[colnames(as.matrix(fit$sample)) %in% names(tau)] <- tau
+  fulltau[seq_along(fulltau)[!is.na(nm)]] <- tau[nm[!is.na(nm)]]
+  fit$tapering.coefficients <- fulltau
+  fit$taudelta.offset <- 2*fulltau*as.vector(apply(sapply(fit$sample,function(x){apply(x[,-ncol(x)],2,sd)}),1,mean))
+  fit$taudelta.mean <- apply((2*fit.MPLE$glm$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$glm$prior.weights)
+ #fit$taudelta.median <- apply((2*fit.MPLE$glm$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fulltau,"*"),2,wtd.median,weight=fit.MPLE$glm$prior.weights)
+  fit$taudelta.mad <- apply((2*fit.MPLE$glm$model[,1]-1)*sweep(abs(fit.MPLE$xmat.full),2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$glm$prior.weights)
 
   class(fit) <- c("ergm.tapered",family,class(fit))
   
