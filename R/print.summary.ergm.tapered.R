@@ -59,14 +59,18 @@ print.summary.ergm.tapered <- function (x,
     if(extended == TRUE){
      coef.x <- cbind(coef(x)[,1:2], tau=x$tapering.coefficients, bias=as.numeric(sprintf("%.4f", -x$taudelta.mean)), coef(x)[,4:5])
     #coef.x <- cbind(coef(x)[,1:2], tau=x$tapering.coefficients, bias=as.numeric(sprintf("%.4f", x$taudelta.offset+x$taudelta.mad)), coef(x)[,4:5])
+     cs.ind <- c(1:2,4)
+     tst.ind <- 5L
     #digits <- c(3,3,3,3,3,3)
     }else{
      coef.x <- coef(x)
+     cs.ind <- c(1:2)
+     tst.ind <- 4L
     #digits <- c(3,3,3,3)
     }
     printCoefmat(coef.x, digits=digits, signif.stars=signif.stars,
                  P.values=TRUE, has.Pvalue=TRUE, na.print="NA",
-                 eps.Pvalue=eps.Pvalue, cs.ind=c(1:2,4), tst.ind=5L,...)
+                 eps.Pvalue=eps.Pvalue, cs.ind=cs.ind, tst.ind=tst.ind,...)
   }
 
   writeLines(c(strwrap(paste0("The estimated tapering scaling factor is ", format(x$r, digits = digits),".")),''))
