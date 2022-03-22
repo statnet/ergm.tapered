@@ -241,7 +241,29 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
                 response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
   }
   
-    # post processs fit to alter Hessian etc
+# fit$tapering.centers <- ostats[as.character(unlist(taper.terms))]
+
+  fit$tapering.centers <- taper.stats
+  fit$tapering.centers.o <- ostats
+  fit$tapering.centers.t <- taper.terms
+  fit$tapering.coef <- tau
+  fit$r <- r
+  cnames.all <- param_names(fit)
+  a <- grep("Taper_Penalty",cnames.all,fixed=TRUE)
+  if(length(a)>0){
+    fit$Taper_Penalty <- stats::coef(fit)[a]
+    fit$r <- r/sqrt(3*exp(log(2)*(fit$Taper_Penalty-2))/(1+exp(log(2)*(fit$Taper_Penalty-2))))
+    fit$tapering.coef <- tau * r * r /(fit$r*fit$r)
+  }
+  a <- grep("Var(",cnames.all,fixed=TRUE)
+  if(length(a)>0){
+    a <- -1/(stats::coef(fir)[a]*pmax(1,fit$tapering.centers))
+    a[is.nan(a) | a < 0] <- 0
+    fit$r <- mean(sqrt(a))
+    fit$tapering.coef <- tau * r * r /(fit$r*fit$r)
+  }
+  fit$orig.formula <- formula
+
     if(fixed){
       sample <- as.matrix(fit$sample)[,1:npar,drop=FALSE]
       fit$hessian <- fit$hessian[1:npar,1:npar]
@@ -253,44 +275,37 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
       fcoef <- coef(fit)[1:npar]
     }
     colnames(sample) <- names(ostats)
-    
-    if(is.null(tapering.centers)){
-      hesstau <- ostats - ostats
-      nm <- match(names(ostats),names(tau))
-  #   hesstau[names(ostats) %in% names(tau)] <- tau
-      hesstau[seq_along(hesstau)[!is.na(nm)]] <- tau[nm[!is.na(nm)]]
-      hess <- .tapered.hessian(sample, hesstau)
-      if(is.curved(fit)){
-        curved_m <- ergm_model(formula, nw, response=response, ...)
-        curved_m <- .tapered.curved.hessian(hess,fcoef,curved_m$etamap)
-        fit$hessian[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- curved_m
-        fit$covar[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- MASS::ginv(curved_m)
-      }else{
-        fit$hessian <- hess
-        fit$covar <- -MASS::ginv(fit$hessian)
-      }
-    }
- #}else{
- #    fit$covar <- -MASS::ginv(fit$hessian)
- #}
-# fit$tapering.centers <- ostats[as.character(unlist(taper.terms))]
-
-  fit$tapering.centers <- taper.stats
-  fit$tapering.centers.o <- ostats
-  fit$tapering.centers.t <- taper.terms
-  fit$tapering.coef <- tau
-  fit$r <- r
-  fit$orig.formula <- formula
 
   fulltau <- fcoef - fcoef
   nm <- match(names(fcoef),names(tau))
 # fulltau[colnames(as.matrix(fit$sample)) %in% names(tau)] <- tau
-  fulltau[seq_along(fulltau)[!is.na(nm)]] <- tau[nm[!is.na(nm)]]
+  fulltau[seq_along(fulltau)[!is.na(nm)]] <- fit$tapering.coef[nm[!is.na(nm)]]
   fit$tapering.coefficients <- fulltau
   fit$taudelta.offset <- 2*fulltau*as.vector(apply(sapply(fit$sample,function(x){apply(x[,-ncol(x)],2,sd)}),1,mean))
   fit$taudelta.mean <- apply((2*fit.MPLE$glm$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$glm$prior.weights)
  #fit$taudelta.median <- apply((2*fit.MPLE$glm$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fulltau,"*"),2,wtd.median,weight=fit.MPLE$glm$prior.weights)
   fit$taudelta.mad <- apply((2*fit.MPLE$glm$model[,1]-1)*sweep(abs(fit.MPLE$xmat.full),2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$glm$prior.weights)
+
+  # post processs fit to alter Hessian etc
+  if(is.null(tapering.centers)){
+    hesstau <- ostats - ostats
+    nm <- match(names(ostats),names(tau))
+#   hesstau[names(ostats) %in% names(tau)] <- tau
+    hesstau[seq_along(hesstau)[!is.na(nm)]] <- tau[nm[!is.na(nm)]]
+    hess <- .tapered.hessian(sample, fulltau)
+    if(is.curved(fit)){
+      curved_m <- ergm_model(formula, nw, response=response, ...)
+      curved_m <- .tapered.curved.hessian(hess,fcoef,curved_m$etamap)
+      fit$hessian[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- curved_m
+      fit$covar[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- -MASS::ginv(curved_m)
+    }else{
+      fit$hessian <- hess
+      fit$covar <- -MASS::ginv(fit$hessian)
+    }
+  }
+#}else{
+#    fit$covar <- -MASS::ginv(fit$hessian)
+#}
 
   class(fit) <- c("ergm.tapered",family,class(fit))
   

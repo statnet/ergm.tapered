@@ -31,14 +31,16 @@ InitErgmTerm.Kpenalty <- function(nw, arglist, response=NULL, ...){
 
   map <- function(x, n, ...){
     b <- 1/(x[n]*x[n])
-    c(ergm.eta(x[-n], m$etamap), 3*exp(log(2)*(b-2))/(1+exp(log(2)*(b-2))))
+    blim <- 3
+    c(ergm.eta(x[-n], m$etamap), blim*exp(log(2)*(b-2))/(1+exp(log(2)*(b-2))))
   }
 
   gradient <- function(x, n, ...){
     a <- ergm.etagrad(x[-n], m$etamap)
     a <- rbind(a,0)
     b <- 1/(x[n]*x[n])
-    cbind(a, rep(c(0,-6*log(2)*exp(log(2)*(b-2))/(b^1.5*(1+exp(log(2)*(b-2)))^2)),c(nrow(a)-1,1)))
+    blim <- 3
+    cbind(a, rep(c(0,-2*blim*log(2)*exp(log(2)*(b-2))/(b^1.5*(1+exp(log(2)*(b-2)))^2)),c(nrow(a)-1,1)))
   }
 
 # mintheta <- c(m$etamap$mintheta,-Inf)
