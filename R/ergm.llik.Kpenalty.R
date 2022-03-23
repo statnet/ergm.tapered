@@ -13,6 +13,7 @@ llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   eta <- ergm.eta(theta, etamap)
   etaparam <- eta-eta0
 
+
   basepred <- xsim %*% etaparam
   mb <- lweighted.mean(basepred,rowweights(xsim))
   vb <- lweighted.var(basepred,rowweights(xsim))
@@ -23,6 +24,9 @@ llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   if(is.infinite(llr) | is.na(llr)){llr <- -200}
   if(llr < -200){llr <- -200}
 
+  Tpenalty_diff <- eta[Kpenalty] - eta0[Kpenalty]
+
+  if(eta[Kpenalty] < 2.99 | eta0[Kpenalty] < 2.99){
   logm2 <- log(colMeans(xsim[,-Kpenalty]^2))
   logm4 <- log(colMeans(xsim[,-Kpenalty]^4))
   logm2[is.infinite(logm2) | is.nan(logm2) | is.na(logm2)] <- 0
@@ -39,14 +43,15 @@ llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   logm2[is.infinite(logm2) | is.nan(logm2) | is.na(logm2)] <- 0
   logm4[is.infinite(logm4) | is.nan(logm4) | is.na(logm4)] <- 0
   kurt <- exp(logm4-2*logm2)
+
   kurt[is.nan(kurt) | is.na(kurt)] <- 3
   penalty <- -0.5*((kurt-control.llik$MCMLE.kurtosis.location)/control.llik$MCMLE.kurtosis.scale)^2
   Kurt_penalty <- mean(penalty)
 #
   Kurt_penalty_diff <- Kurt_penalty - Kurt_penalty0
-  Tpenalty_diff <- eta[Kpenalty] - eta0[Kpenalty]
-#
-  llr <- llr + control.llik$MCMLE.kurtosis.penalty*Tpenalty_diff + Kurt_penalty_diff
+  llr <- llr + Kurt_penalty_diff
+  }
+  llr <- llr + control.llik$MCMLE.kurtosis.penalty*Tpenalty_diff
 
   # Simplistic error control;  -800 is effectively like -Inf:
   if(is.infinite(llr) | is.na(llr)){llr <- -800}
