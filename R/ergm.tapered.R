@@ -302,6 +302,10 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
       fit$hessian <- hess
       fit$covar <- -MASS::ginv(fit$hessian)
     }
+    if(mean(diag(fit$covar)<0) > 0.5) {
+      fit$covar <- -fit$covar 
+      fit$hessian <- -fit$hessian 
+    }
   }
 #}else{
 #    fit$covar <- -MASS::ginv(fit$hessian)

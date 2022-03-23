@@ -93,3 +93,4 @@ dkms.conf
 *~
 *.bak
 .Rproj.user
+*.print
