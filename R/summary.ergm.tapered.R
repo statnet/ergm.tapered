@@ -188,17 +188,6 @@ summary.ergm.tapered <- function (object, ...,
   ans$asyse <- asyse
   ans$orig.formula <- object$orig.formula
   ans$r <- object$r
-  a <- grep("Taper_Penalty",cnames.all,fixed=TRUE)
-  if(length(a)>0){
-    ans$Taper_Penalty <- stats::coef(object)[a]
-    ans$r <- object$r/sqrt(3*exp(log(2)*(ans$Taper_Penalty-2))/(1+exp(log(2)*(ans$Taper_Penalty-2))))
-  }
-  a <- grep("Var(",cnames.all,fixed=TRUE)
-  if(length(a)>0){
-    a <- -1/(stats::coef(object)[a]*pmax(1,object$tapering.centers))
-    a[is.nan(a) | a < 0] <- 0
-    ans$r <- mean(sqrt(a))
-  }
 
   class(ans) <- "summary.ergm.tapered"
   ans
