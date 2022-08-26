@@ -8,6 +8,7 @@ llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
                      ){
 
   Kpenalty <- grep("Taper_Penalty",colnames(xsim), fixed=TRUE)
+  blim <- c(3,3) # max= blim[2], min = 3/(1+2^blim[2])
 
 # Convert theta to eta
   eta <- ergm.eta(theta, etamap)
@@ -26,13 +27,13 @@ llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
 
   Tpenalty_diff <- eta[Kpenalty] - eta0[Kpenalty]
 
-  if(eta[Kpenalty] < 2.99 | eta0[Kpenalty] < 2.99){
+  if(eta[Kpenalty] < (blim[2]-0.001) | eta0[Kpenalty] < (blim[2]-0.001)){
   logm2 <- log(colMeans(xsim[,-Kpenalty]^2))
   logm4 <- log(colMeans(xsim[,-Kpenalty]^4))
   logm2[is.infinite(logm2) | is.nan(logm2) | is.na(logm2)] <- 0
   logm4[is.infinite(logm4) | is.nan(logm4) | is.na(logm4)] <- 0
   kurt <- exp(logm4-2*logm2)
-  kurt[is.nan(kurt) | is.na(kurt)] <- 3
+  kurt[is.nan(kurt) | is.na(kurt)] <- blim[2]
   penalty <- -0.5*((kurt-control.llik$MCMLE.kurtosis.location)/control.llik$MCMLE.kurtosis.scale)^2
   Kurt_penalty0 <- mean(penalty)
 
@@ -44,7 +45,7 @@ llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   logm4[is.infinite(logm4) | is.nan(logm4) | is.na(logm4)] <- 0
   kurt <- exp(logm4-2*logm2)
 
-  kurt[is.nan(kurt) | is.na(kurt)] <- 3
+  kurt[is.nan(kurt) | is.na(kurt)] <- blim[2]
   penalty <- -0.5*((kurt-control.llik$MCMLE.kurtosis.location)/control.llik$MCMLE.kurtosis.scale)^2
   Kurt_penalty <- mean(penalty)
 #
@@ -196,5 +197,10 @@ llik.hessian.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   
   H[is.na(H) | is.nan(H) | is.infinite(H)] <- 0
   dgrad[is.na(dgrad) | is.nan(dgrad) | is.infinite(dgrad)] <- 0
-  H + dgrad
+  # a simple check for p.s.d. of the approximation
+  if(any(diag(H + dgrad) > 0)){
+   H
+  }else{
+   H + dgrad
+  }
 }
