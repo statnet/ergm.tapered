@@ -25,7 +25,15 @@
 #' @param MCMLE.kurtosis.penalty numeric: The size of the penalty for larger values of the tapering parameter on the log-likelihood.
 #' See [control.ergm()] for the standard [ergm()] options. The tapering models add
 #' \code{} and .
-#' @param MCMLE.MCMC.precision,MCMLE.MCMC.max.ESS.frac
+#' @param MCMLE.termination The criterion used for terminating MCMLE
+#' estimation. The default for \code{ergm.tapered} is
+#' `"precision"`: Terminate when the estimated loss in estimating precision
+#' due to using MCMC standard errors is below the precision bound specified by
+#' \code{MCMLE.MCMC.precision}, and the Hummel step length is 1 for two
+#' consecutive iterations. See \code{MCMLE.MCMC.precision} for details. This
+#' feature is in experimental status until we verify the coverage of the
+#' standard errors. See the documentation for \code{\link{control.ergm}} for the other options
+#' @param MCMLE.MCMC.precision
 #' \code{MCMLE.MCMC.precision} is a vector of upper bounds on the standard
 #' errors induced by the MCMC algorithm, expressed as a percentage of the total
 #' standard error. The MCMLE algorithm will terminate when the MCMC standard
@@ -57,7 +65,8 @@ control.ergm.tapered<-function(
                        MCMLE.kurtosis.location=3.0,
                        MCMLE.kurtosis.scale=0.3,
                        MCMLE.kurtosis.penalty=2.0,
-                       MCMLE.MCMC.precision=0.15,
+                       MCMLE.termination=("precision","confidence", "Hummel", "Hotelling", "none"),
+                       MCMLE.MCMC.precision=0.005,
                  #     MCMC.effectiveSize.maxruns=8,
                        loglik=control.logLik.ergm.tapered(),
                        ...
