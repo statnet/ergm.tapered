@@ -30,17 +30,21 @@ InitErgmTerm.Kpenalty <- function(nw, arglist, response=NULL, ...){
   gs0 <- summary(m, NULL, response=response)
 
   map <- function(x, n, ...){
-    b <- 1/(x[n]*x[n])
-    blim <- 3
-    c(ergm.eta(x[-n], m$etamap), blim*exp(log(2)*(b-2))/(1+exp(log(2)*(b-2))))
+    blim <- c(3,3,0.0001) # max= blim[2], min = 3/(1+2^blim[2])
+    b <- blim[3]/(x[n]*x[n])
+    r <- blim[2]*exp(log(2)*(b-blim[1]))/(1+exp(log(2)*(b-blim[1])))
+    if(is.na(r) | is.infinite(r) | is.nan(r)) r <- blim[2]
+    c(ergm.eta(x[-n], m$etamap), r)
   }
 
   gradient <- function(x, n, ...){
     a <- ergm.etagrad(x[-n], m$etamap)
     a <- rbind(a,0)
-    b <- 1/(x[n]*x[n])
-    blim <- 3
-    cbind(a, rep(c(0,-2*blim*log(2)*exp(log(2)*(b-2))/(b^1.5*(1+exp(log(2)*(b-2)))^2)),c(nrow(a)-1,1)))
+    blim <- c(3,3,0.0001) # 0.0001, max= blim[2], min = 3/(1+2^blim[2])
+    b <- blim[3]/(x[n]*x[n])
+    r <- -2*blim[3]*blim[2]*log(2)*exp(log(2)*(b-blim[1]))/(b^1.5*(1+exp(log(2)*(b-blim[1])))^2)
+    if(is.na(r) | is.infinite(r) | is.nan(r)) r <- 0
+    cbind(a, rep(c(0,r),c(nrow(a)-1,1)))
   }
 
 # mintheta <- c(m$etamap$mintheta,-Inf)
