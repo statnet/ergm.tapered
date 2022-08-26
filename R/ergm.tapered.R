@@ -88,12 +88,12 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
      tmp <- taper.terms
      taper.terms <- NULL
      for(i in seq_along(tmp)){if(a[i]){taper.terms <- c(taper.terms,tmp[[i]])}}
-     taper_formula <- append_rhs.formula(~.,taper.terms)
+     taper_formula <- append_rhs.formula(~.,taper.terms, env=NULL)
      trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,taper.terms){all(term != taper.terms)}, taper.terms))
-     reformula <- append_rhs.formula(trimmed_formula,taper_formula, environment()) 
+     reformula <- append_rhs.formula(trimmed_formula,taper_formula, env=NULL) 
    }else{if(taper.terms=="all"){
      taper.terms <- list_rhs.formula(formula)
-     taper_formula <- append_rhs.formula(~.,taper.terms)
+     taper_formula <- append_rhs.formula(~.,taper.terms, env=NULL)
      trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,taper.terms){all(term != taper.terms)}, taper.terms))
      reformula <- formula
    }else{
@@ -101,21 +101,18 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
       stop('taper.terms must be "dependent", "all" or a formula of terms.')
     }
     taper.terms <- list_rhs.formula(taper.terms)
-    taper_formula <- append_rhs.formula(~.,taper.terms)
+    taper_formula <- append_rhs.formula(~.,taper.terms, env=NULL)
     trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,taper.terms){all(term != taper.terms)}, taper.terms))
-    reformula <- append_rhs.formula(trimmed_formula,taper_formula, environment()) 
+    reformula <- append_rhs.formula(trimmed_formula,taper_formula, env=NULL) 
    }}
   }else{
     taper_formula <- taper.terms
     taper.terms <- list_rhs.formula(taper.terms)
     trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,taper.terms){all(term != taper.terms)}, taper.terms))
-    reformula <- append_rhs.formula(trimmed_formula,taper_formula, environment()) 
+    reformula <- append_rhs.formula(trimmed_formula,taper_formula, env=NULL) 
   }
+  attr(taper.terms,"env") <- NULL
   taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms), response=response, ...)
-
-# if(is.logical(taper.terms)){
-#  if(length(taper.terms)!=length(ostats)){stop("The length of taper.terms must match that of the list of terms.")}
-# }
 
   # set tapering coefficient
   tau <- switch(family,
@@ -185,7 +182,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
 	       )
 
   }else{
-    newformula <- append_rhs.formula(trimmed_formula,taper_terms, environment()) 
+    newformula <- append_rhs.formula(trimmed_formula,taper_terms, env=NULL) 
   }
   ostats <- summary(reformula, response=response, ...)
   if(!is.null(tapering.centers)){
@@ -212,8 +209,6 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     message("\n")
   }
   
-# control$main.hessian <- FALSE
-# if(control$MCMLE.termination == "Hotelling") control$MCMLE.termination <- "confidence"
   re.names <- names(summary(newformula))
   if(!fixed){
     control$init <- c(control$init,1)
@@ -231,6 +226,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   # fit ergm
   fit.MPLE.control <- control
   fit.MPLE.control$init <- NULL
+  fit.MPLE.control$MPLE.save.xmat <- TRUE
   fit.MPLE <- ergm(reformula, control=fit.MPLE.control, estimate="MPLE",
                    response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
   if(is.null(target.stats)){
@@ -241,8 +237,6 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
                 response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
   }
   
-# fit$tapering.centers <- ostats[as.character(unlist(taper.terms))]
-
   fit$tapering.centers <- taper.stats
   fit$tapering.centers.o <- ostats
   fit$tapering.centers.t <- taper.terms
@@ -251,8 +245,10 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   cnames.all <- param_names(fit)
   a <- grep("Taper_Penalty",cnames.all,fixed=TRUE)
   if(length(a)>0){
+    blim <- c(3,3)
     fit$Taper_Penalty <- stats::coef(fit)[a]
-    fit$r <- r/sqrt(3*exp(log(2)*(fit$Taper_Penalty-2))/(1+exp(log(2)*(fit$Taper_Penalty-2))))
+   #fit$r <- r/sqrt(3*exp(log(2)*(fit$Taper_Penalty-2))/(1+exp(log(2)*(fit$Taper_Penalty-2))))
+    fit$r <- r/sqrt(blim[2]*exp(log(2)*(fit$Taper_Penalty-blim[1]))/(1+exp(log(2)*(fit$Taper_Penalty-blim[1]))))
     fit$tapering.coef <- tau * r * r /(fit$r*fit$r)
   }
   a <- grep("Var(",cnames.all,fixed=TRUE)
@@ -264,77 +260,65 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   }
   fit$orig.formula <- formula
 
-    if(fixed){
-      sample <- as.matrix(fit$sample)[,1:npar,drop=FALSE]
-      fit$hessian <- fit$hessian[1:npar,1:npar]
-      fcoef <- coef(fit)[1:npar]
-    }else{
-      sample <- as.matrix(fit$sample)[,1:npar,drop=FALSE]
-    # fit$hessian <- fit$hessian[1:npar,1:npar]
-    # fit$hessian <- -fit$hessian
-      fcoef <- coef(fit)[1:npar]
-    }
-    colnames(sample) <- names(ostats)
+  if(fixed){
+    sample <- as.matrix(fit$sample)[,1:npar,drop=FALSE]
+    fit$hessian <- fit$hessian[1:npar,1:npar]
+    fit$covar <- fit$covar[1:npar,1:npar]
+    fcoef <- coef(fit)[1:npar]
+  }else{
+    sample <- as.matrix(fit$sample)[,1:npar,drop=FALSE]
+    fcoef <- coef(fit)[1:npar]
+  }
+  colnames(sample) <- names(ostats)
 
   fulltau <- fcoef - fcoef
   nm <- match(names(fcoef),names(tau))
-# fulltau[colnames(as.matrix(fit$sample)) %in% names(tau)] <- tau
   fulltau[seq_along(fulltau)[!is.na(nm)]] <- fit$tapering.coef[nm[!is.na(nm)]]
+  fcoef[seq_along(fulltau)[!is.na(nm)]] <- fcoef[nm[!is.na(nm)]]
   fit$tapering.coefficients <- fulltau
   fit$taudelta.offset <- 2*fulltau*as.vector(apply(sapply(fit$sample,function(x){apply(x[,-ncol(x)],2,sd)}),1,mean))
-  fit$taudelta.mean <- apply((2*fit.MPLE$glm$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$glm$prior.weights)
- #fit$taudelta.median <- apply((2*fit.MPLE$glm$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fulltau,"*"),2,wtd.median,weight=fit.MPLE$glm$prior.weights)
-  fit$taudelta.mad <- apply((2*fit.MPLE$glm$model[,1]-1)*sweep(abs(fit.MPLE$xmat.full),2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$glm$prior.weights)
+  fit$taudelta.mean <- apply((2*fit.MPLE$glm.result$value$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$glm.result$value$prior.weights)
+  fit$taudelta.mad <- apply((2*fit.MPLE$glm.result$value$model[,1]-1)*sweep(abs(fit.MPLE$xmat.full),2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$value$glm.result$prior.weights)
 
   # post processs fit to alter Hessian etc
   if(is.null(tapering.centers)){
-    hesstau <- ostats - ostats
     nm <- match(names(ostats),names(tau))
-#   hesstau[names(ostats) %in% names(tau)] <- tau
-    hesstau[seq_along(hesstau)[!is.na(nm)]] <- tau[nm[!is.na(nm)]]
-    hess <- .tapered.hessian(sample, fulltau)
+    ihess <- cov(sample)
+    hess <- .tapered.hessian(ihess, fulltau)
     if(is.curved(fit)){
       curved_m <- ergm_model(formula, nw, response=response, ...)
       curved_m <- .tapered.curved.hessian(hess,fcoef,curved_m$etamap)
       fit$hessian[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- curved_m
       fit$covar[colnames(fit$hessian) %in% colnames(curved_m),rownames(fit$hessian) %in% rownames(curved_m)] <- -MASS::ginv(curved_m)
     }else{
-      fit$hessian <- hess
-      fit$covar <- -MASS::ginv(fit$hessian)
+      fit$hessian[colnames(fit$hessian) %in% colnames(hess),rownames(fit$hessian) %in% rownames(hess)] <- hess
+      fit$covar[colnames(fit$hessian) %in% colnames(hess),rownames(fit$hessian) %in% rownames(hess)] <- -MASS::ginv(hess)
     }
     if(mean(diag(fit$covar)<0) > 0.5) {
       fit$covar <- -fit$covar 
       fit$hessian <- -fit$hessian 
     }
   }
-#}else{
-#    fit$covar <- -MASS::ginv(fit$hessian)
-#}
 
   class(fit) <- c("ergm.tapered",family,class(fit))
   
-# fit$covar <- fit$est.cov
-# fit$covar <- -MASS::ginv(fit$hessian)
-# fit$est.cov <- fit$covar
-
   fit
 }
 
-.tapered.hessian <- function(sample, coef){
-  cv <- var(sample)
+.tapered.hessian <- function(cv, coef){
   
-  np <-ncol(cv)
+  np <- ncol(cv)
   B <- sweep(cv, 2, 2*coef, "*")
-  I <- diag(rep(1,np))
-  inv <- MASS::ginv(B-I)
+  I <- diag(np)
+  inv <- MASS::ginv(I-B)
+ #inv <- MASS::ginv(B-I)
   
   #derivative of mean value parameters
   dmu <- inv %*% cv
   
   #second derivative of log likelihoods
   ddll <- diag(rep(0,np))
-  colnames(ddll) <- colnames(sample)
-  rownames(ddll) <- colnames(sample)
+  dimnames(ddll) <- list(colnames(cv), colnames(cv))
   for(i in 1:np){
     for(j in 1:np){
       ddll[i,j] <- -dmu[i,j] - sum(2*coef*dmu[,i]*dmu[,j]) 
