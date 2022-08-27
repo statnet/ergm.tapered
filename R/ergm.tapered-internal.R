@@ -7,6 +7,7 @@
 #' 
 #' @name ergm.tapered-internal
 #' @aliases llik.fun.Kpenalty llik.grad.Kpenalty.numDeriv llik.hessian.Kpenalty.numDeriv
+#' llik.grad.Kpenalty llik.hessian.Kpenalty
 #' llik.fun.obs.Kpenalty llik.grad.obs.Kpenalty.numDeriv llik.hessian.obs.Kpenalty.numDeriv
 #' @seealso ergm.tapered-package
 #' @keywords internal

@@ -5,6 +5,8 @@
 \alias{llik.fun.Kpenalty}
 \alias{llik.grad.Kpenalty.numDeriv}
 \alias{llik.hessian.Kpenalty.numDeriv}
+\alias{llik.grad.Kpenalty}
+\alias{llik.hessian.Kpenalty}
 \alias{llik.fun.obs.Kpenalty}
 \alias{llik.grad.obs.Kpenalty.numDeriv}
 \alias{llik.hessian.obs.Kpenalty.numDeriv}

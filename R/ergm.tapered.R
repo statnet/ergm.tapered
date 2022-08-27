@@ -253,7 +253,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   }
   a <- grep("Var(",cnames.all,fixed=TRUE)
   if(length(a)>0){
-    a <- -1/(stats::coef(fir)[a]*pmax(1,fit$tapering.centers))
+    a <- -1/(stats::coef(fit)[a]*pmax(1,fit$tapering.centers))
     a[is.nan(a) | a < 0] <- 0
     fit$r <- mean(sqrt(a))
     fit$tapering.coef <- tau * r * r /(fit$r*fit$r)

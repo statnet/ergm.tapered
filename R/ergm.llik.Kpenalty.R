@@ -14,7 +14,6 @@ llik.fun.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   eta <- ergm.eta(theta, etamap)
   etaparam <- eta-eta0
 
-
   basepred <- xsim %*% etaparam
   mb <- lweighted.mean(basepred,rowweights(xsim))
   vb <- lweighted.var(basepred,rowweights(xsim))

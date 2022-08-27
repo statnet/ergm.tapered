@@ -40,7 +40,6 @@
 #' errors are below the precision bound, and the Hummel step length is 1 for
 #' two consecutive iterations. This is an experimental feature [ergm()]. 
 #' The default value in [ergm.tapered()] is 0.15, higher than in [ergm()].
-###' @param MCMLE.effectiveSize.maxruns integer The maximum number of times the MCMLE.effectiveSize value will be doubled.
 #' @param loglik list List of additional control arguments for the loglik. See \code{\link{control.logLik.ergm.tapered}}.
 #' @param \dots Additional arguments, passed to other functions This argument
 #' is helpful because it collects any control parameters that have been

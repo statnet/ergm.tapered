@@ -52,8 +52,6 @@ The default value in \code{\link[=ergm.tapered]{ergm.tapered()}} is 0.15, higher
 \item{\dots}{Additional arguments, passed to other functions This argument
 is helpful because it collects any control parameters that have been
 deprecated; a warning message is printed in case of deprecated arguments.}
-
-\item{MCMLE.effectiveSize.maxruns}{integer The maximum number of times the MCMLE.effectiveSize value will be doubled.}
 }
 \value{
 A list with arguments as components. It includes the \code{\link[=control.ergm]{control.ergm()}} arguments.
