@@ -126,8 +126,23 @@ llik.grad.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
   g <- -((kurt-control.llik$MCMLE.kurtosis.location)/control.llik$MCMLE.kurtosis.scale)*dkdeta / control.llik$MCMLE.kurtosis.scale
   g <- colMeans(g)
 #
-  llg <- llg + g
-  llg[Kpenalty] <- llg[Kpenalty] + control.llik$MCMLE.kurtosis.penalty
+   llik.fun.Kpenalty.tau <- function(tau, Kpenalty, theta ,xsim, xsim.obs,
+                 eta0, etamap,
+                 control.llik){
+    theta[Kpenalty] <- tau
+    llik.fun.Kpenalty(theta,
+                 xsim=xsim, xsim.obs=xsim.obs,
+                 eta0=eta0, etamap=etamap,
+                 control.llik=control.llik
+                )
+   }
+   aa=numDeriv::grad(llik.fun.Kpenalty.tau,theta[Kpenalty],Kpenalty=Kpenalty,theta=theta,
+                 xsim=xsim, xsim.obs=xsim.obs,
+                 eta0=eta0, etamap=etamap,
+                 control.llik=control.llik
+                )
+  llg <- as.numeric(llg) + g
+  llg[Kpenalty] <- aa
   llg[is.na(llg) | is.nan(llg)] <- 0
 
   # Return negative grad
@@ -195,12 +210,31 @@ llik.hessian.Kpenalty <- function(theta, xsim, xsim.obs=NULL,
    dgrad <- dgrad + dgradkurt / length(kurt)
   }
   
-  H[is.na(H) | is.nan(H) | is.infinite(H)] <- 0
-  dgrad[is.na(dgrad) | is.nan(dgrad) | is.infinite(dgrad)] <- 0
+   llik.grad.Kpenalty.tau <- function(tau, Kpenalty, theta ,xsim, xsim.obs,
+                 eta0, etamap,
+                 control.llik){
+    theta[Kpenalty] <- tau
+    llik.grad.Kpenalty(theta,
+                 xsim=xsim, xsim.obs=xsim.obs,
+                 eta0=eta0, etamap=etamap,
+                 control.llik=control.llik
+                )
+   }
+   aa=as.numeric(numDeriv::jacobian(llik.grad.Kpenalty.tau,theta[Kpenalty],Kpenalty=Kpenalty,theta=theta,
+                 xsim=xsim, xsim.obs=xsim.obs,
+                 eta0=eta0, etamap=etamap,
+                 control.llik=control.llik
+                ))
+  HA <- H + dgrad
+  HA[ Kpenalty,] <- aa
+  HA[,Kpenalty ] <- aa
+
+  HA[is.na(HA) | is.nan(HA) | is.infinite(HA)] <- 0
   # a simple check for p.s.d. of the approximation
-  if(any(diag(H + dgrad) > 0)){
+  if(any(diag(HA) > 0)){
+   H[is.na(H) | is.nan(H) | is.infinite(H)] <- 0
    H
   }else{
-   H + dgrad
+   HA
   }
 }
