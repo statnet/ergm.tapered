@@ -69,7 +69,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   control["MCMC.esteq.exclude.statistics"] <- "Taper_Penalty"
   # Statistics to exclude from the estimating equations
   # Needed by ergm.getMCMCsample
-  match.llik.arg.pars <- c("MCMLE.metric","MCMC.esteq.exclude.statistics",STATIC_TAPERING_CONTROLS)
+  match.llik.arg.pars <- c("MCMLE.metric","MCMLE.termination","MCMC.esteq.exclude.statistics",STATIC_TAPERING_CONTROLS)
   for(arg in match.llik.arg.pars)
     control$loglik[arg]<-list(control[[arg]])
 

@@ -11,7 +11,8 @@ control.ergm.tapered(
   MCMLE.kurtosis.location = 3,
   MCMLE.kurtosis.scale = 0.3,
   MCMLE.kurtosis.penalty = 2,
-  MCMLE.MCMC.precision = 0.15,
+  MCMLE.termination = c("precision", "confidence", "Hummel", "Hotelling", "none"),
+  MCMLE.MCMC.precision = 0.005,
   loglik = control.logLik.ergm.tapered(),
   ...
 )
@@ -30,7 +31,16 @@ target kurtosis value.}
 See \code{\link[=control.ergm]{control.ergm()}} for the standard \code{\link[=ergm]{ergm()}} options. The tapering models add
 \code{} and .}
 
-\item{MCMLE.MCMC.precision, MCMLE.MCMC.max.ESS.frac}{\code{MCMLE.MCMC.precision} is a vector of upper bounds on the standard
+\item{MCMLE.termination}{The criterion used for terminating MCMLE
+estimation. The default for \code{ergm.tapered} is
+\code{"precision"}: Terminate when the estimated loss in estimating precision
+due to using MCMC standard errors is below the precision bound specified by
+\code{MCMLE.MCMC.precision}, and the Hummel step length is 1 for two
+consecutive iterations. See \code{MCMLE.MCMC.precision} for details. This
+feature is in experimental status until we verify the coverage of the
+standard errors. See the documentation for \code{\link{control.ergm}} for the other options}
+
+\item{MCMLE.MCMC.precision}{\code{MCMLE.MCMC.precision} is a vector of upper bounds on the standard
 errors induced by the MCMC algorithm, expressed as a percentage of the total
 standard error. The MCMLE algorithm will terminate when the MCMC standard
 errors are below the precision bound, and the Hummel step length is 1 for
@@ -42,6 +52,8 @@ The default value in \code{\link[=ergm.tapered]{ergm.tapered()}} is 0.15, higher
 \item{\dots}{Additional arguments, passed to other functions This argument
 is helpful because it collects any control parameters that have been
 deprecated; a warning message is printed in case of deprecated arguments.}
+
+\item{MCMLE.effectiveSize.maxruns}{integer The maximum number of times the MCMLE.effectiveSize value will be doubled.}
 }
 \value{
 A list with arguments as components. It includes the \code{\link[=control.ergm]{control.ergm()}} arguments.

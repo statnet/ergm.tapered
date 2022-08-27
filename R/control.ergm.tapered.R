@@ -65,7 +65,7 @@ control.ergm.tapered<-function(
                        MCMLE.kurtosis.location=3.0,
                        MCMLE.kurtosis.scale=0.3,
                        MCMLE.kurtosis.penalty=2.0,
-                       MCMLE.termination=("precision","confidence", "Hummel", "Hotelling", "none"),
+                       MCMLE.termination=c("precision","confidence", "Hummel", "Hotelling", "none"),
                        MCMLE.MCMC.precision=0.005,
                  #     MCMC.effectiveSize.maxruns=8,
                        loglik=control.logLik.ergm.tapered(),
@@ -77,7 +77,7 @@ control.ergm.tapered<-function(
   for(arg in names(formal.args))
     control[arg]<-list(get(arg))
 
-  match.arg.pars <- c("MCMLE.metric")
+  match.arg.pars <- c("MCMLE.metric","MCMLE.termination")
   for(arg in match.arg.pars)
     control[arg]<-list(match.arg(control[[arg]][1],eval(formal.args[[arg]])))
 
