@@ -1,18 +1,15 @@
-#' @import ergd statnet.common network
+#' @import ergm statnet.common network
 InitErgmTerm.Var <- function(nw, arglist, response=NULL, ...){
-  a <- ergd::check.ErgmTerm(nw, arglist,
+  a <- ergm::check.ErgmTerm(nw, arglist,
                       varnames = c("formula", "coef", "m"),
                       vartypes = c("formula", "numeric", "numeric"),
                       defaultvalues = list(NULL, NULL, NULL),
-                      required = c(TRUE, TRUE, TRUE))
-  f <- a$formula
+                      required = c(TRUE, FALSE, FALSE))
   beta <- a$coef
   nws <- a$m
-  if(length(f)==2) f <- statnet.common::nonsimp_update.formula(f, nw~.)
-  else nw <- ergm.getnetwork(f)
 
-  m <- ergd::ergm_model(f, nw,...)
-  NVL(nws) <- summary(m)
+  m <- ergm_model(a$formula, nw,...)
+  NVL(nws) <- summary(m, nw, response=response)
 
   if(!is.null(beta)){ taper.mult <- beta }else{ taper.mult <- 1 }
   # TODO: Names matching here?
@@ -30,21 +27,21 @@ InitErgmTerm.Var <- function(nw, arglist, response=NULL, ...){
   }}
   beta<-rep(1,length(beta))
 
-  inputs <- ergd::to_ergm_Cdouble(m)
-  
   # Should be empty network statistics
-  gs0 <- summary(m)
+  gs0 <- summary(m, NULL, response=response)
 
   map <- function(x, n, ...){
 #   c(ergm.eta(x, m$etamap))
-    c(-exp(x))
+#   c(-exp(x))
+    x
   }
 
   gradient <- function(x, n, ...){
 #   cbind(ergm.etagrad(x, m$etamap))
 #   cbind(c(1,0,0,0),c(0,1,0,0),c(0,0,-exp(x[3]),0),c(0,0,0,-exp(x[4])))
 #   cbind(c(-exp(x[1]),0),c(0,-exp(x[2])))
-    diag(-exp(x),ncol=length(x))
+#   diag(-exp(x),ncol=length(x))
+    diag(length(x))
   }
 
   cnt <- c(paste0('Var(',param_names(m, canonical=FALSE),')'))
@@ -53,7 +50,9 @@ InitErgmTerm.Var <- function(nw, arglist, response=NULL, ...){
 
 # cnt <- c(paste0('Var(',param_names(m, canonical=FALSE),",",beta,')'))
   list(name="var_term", coef.names = cnt,
-       inputs=c(beta, inputs, gs0-nws), # Note: what gets passed is the difference between the empty network and the observed network.
-       dependence=TRUE, emptynwstats = c((gs0-nws)^2*beta),
-       map = map, gradient = gradient, params = params, minpar=m$etamap$mintheta, maxpar=m$etamap$maxtheta)
+       inputs=c(nws),
+       auxiliaries = ~.submodel_and_summary(a$formula),
+       dependence=TRUE, emptynwstats = c((gs0-nws)^2*beta))
+# The next is the key for curved version of this term
+#      map = map, gradient = gradient, params = params, minpar=m$etamap$mintheta, maxpar=m$etamap$maxtheta)
 }

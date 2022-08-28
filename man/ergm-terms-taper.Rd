@@ -47,6 +47,6 @@
 \examples{
 data(florentine)
 m <- summary(flomarriage~edges + triangles)
-summary(ergd(flomarriage ~ Taper(~edges + triangles, coef=c(.1, .1),m=m)))
+summary(ergm(flomarriage ~ Taper(~edges + triangles, coef=c(.1, .1),m=m)))
 }
 \keyword{models}

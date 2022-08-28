@@ -93,3 +93,5 @@ dkms.conf
 *~
 *.bak
 .Rproj.user
+*.print
+R/ergm.tapered.R.withcomments

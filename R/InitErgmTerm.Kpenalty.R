@@ -1,5 +1,5 @@
-#' @import ergm statnet.common network stats
-InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
+#' @import ergm statnet.common network
+InitErgmTerm.Kpenalty <- function(nw, arglist, response=NULL, ...){
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("formula", "coef", "m"),
                       vartypes = c("formula", "numeric", "numeric"),
@@ -30,21 +30,37 @@ InitErgmTerm.Taper <- function(nw, arglist, response=NULL, ...){
   gs0 <- summary(m, NULL, response=response)
 
   map <- function(x, n, ...){
-    c(ergm.eta(x, m$etamap), -1)
+    blim <- c(3,3,1) # max= blim[2], min = 3/(1+2^blim[2])
+    b <- blim[3]/(x[n]*x[n])
+    r <- blim[2]*exp(log(2)*(b-blim[1]))/(1+exp(log(2)*(b-blim[1])))
+    if(is.na(r) | is.infinite(r) | is.nan(r)) r <- blim[2]
+    c(ergm.eta(x[-n], m$etamap), r)
   }
 
   gradient <- function(x, n, ...){
-    cbind(ergm.etagrad(x, m$etamap), 0)
+    a <- ergm.etagrad(x[-n], m$etamap)
+    a <- rbind(a,0)
+    blim <- c(3,3,1) # 0.0001, max= blim[2], min = 3/(1+2^blim[2])
+    b <- blim[3]/(x[n]*x[n])
+    r <- -2*blim[3]*blim[2]*log(2)*exp(log(2)*(b-blim[1]))/(b^1.5*(1+exp(log(2)*(b-blim[1])))^2)
+    if(is.na(r) | is.infinite(r) | is.nan(r)) r <- 0
+    cbind(a, rep(c(0,r),c(nrow(a)-1,1)))
   }
 
-  cnt <- c(ergm_mk_std_op_namewrap(paste0('Taper(',beta,')'))(param_names(m, canonical=TRUE)), "Taper_Penalty")
+# mintheta <- c(m$etamap$mintheta,-Inf)
+# maxtheta <- c(m$etamap$maxtheta,0)
+  cnt <- c(param_names(m, canonical=FALSE), "Taper_Penalty")
 
-  params <- rep(list(NULL), nparam(m))
-  names(params) <- param_names(m, canonical=FALSE)
+  params <- c(rep(list(NULL), nparam(m)),-log(2))
+# params <- c(as.list(beta),-log(2))
+# params <- rep(list(NULL), nparam(m)+1)
+  names(params) <- c(param_names(m, canonical=FALSE),"Taper_Penalty")
 
-  list(name="taper_term", coef.names = cnt,
+  list(name="Kpenalty_term", coef.names = cnt,
        inputs=c(beta, nws),
        auxiliaries = ~.submodel_and_summary(a$formula),
        dependence=TRUE, emptynwstats = c(gs0, sum((gs0-nws)^2*beta)),
-       map = map, gradient = gradient, params = params, minpar=m$etamap$mintheta, maxpar=m$etamap$maxtheta)
+       map = map, gradient = gradient,
+#      minpar=mintheta, maxpar=maxtheta,
+       params = params)
 }

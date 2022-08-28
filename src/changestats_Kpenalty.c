@@ -3,7 +3,7 @@
 #include "ergm_changestat_operator.h"
 #include "ergm_changestats_operator.h"
 
-C_CHANGESTAT_FN(c_taper_term){
+C_CHANGESTAT_FN(c_Kpenalty_term){
   GET_AUX_STORAGE(StoreModelAndStats, storage);
   double *nws = INPUT_PARAM + N_CHANGE_STATS - 1; // Skip the beta penalty coefficients.
      // The penalty term adds an extra change statistic (for the -1)
@@ -19,6 +19,6 @@ C_CHANGESTAT_FN(c_taper_term){
   for(unsigned int k=0; k<m->n_stats; k++){
     double old_diff = storage->stats[k] - nws[k],
            new_diff = old_diff + m->workspace[k];
-    CHANGE_STAT[N_CHANGE_STATS-1] += INPUT_PARAM[k]*(new_diff*new_diff - old_diff*old_diff);
+    CHANGE_STAT[N_CHANGE_STATS-1] -= INPUT_PARAM[k]*(new_diff*new_diff - old_diff*old_diff);
   }
 }

@@ -12,8 +12,14 @@ ergm.tapered(
   tapering.centers = NULL,
   target.stats = NULL,
   family = "taper",
-  taper.terms = "dependent",
-  control = control.ergm(MCMLE.termination = "confidence"),
+  taper.terms = "all",
+  response = NULL,
+  constraints = ~.,
+  reference = ~Bernoulli,
+  control = control.ergm.tapered(),
+  fixed = TRUE,
+  verbose = FALSE,
+  eval.loglik = TRUE,
   ...
 )
 }
@@ -46,9 +52,33 @@ tapering model of Fellows and Handcock (2016).}
 terms are tapered. If the character variable "all" then all terms are tapered.
 It can also be the RHS of a formula giving the terms to be tapered.}
 
+\item{response}{{Name of the edge attribute whose value is to be
+modeled in the valued ERGM framework. Defaults to \code{NULL} for
+simple presence or absence, modeled via a binary ERGM.}}
+
+\item{constraints}{{A formula specifying one or more constraints
+on the support of the distribution of the networks being modeled,
+using syntax similar to the \code{formula} argument, on the
+right-hand side. See \link[=ergm-constraints]{ERGM constraints}
+\code{\link{ergm}} for details.}}
+
+\item{reference}{{A one-sided formula specifying
+the reference measure (\eqn{h(y)}) to be used.
+See help for \link[=ergm-references]{ERGM reference measures} implemented in the
+\strong{\link[=ergm-package]{ergm}} package.}}
+
 \item{control}{An object of class control.ergm. Passed to the ergm function.}
 
-\item{...}{Additional arguments to ergm.}
+\item{fixed}{A \code{logical}: if this is \code{TRUE}, the tapering is fixed at the passed values.
+If this is \code{FALSE}, the tapering is estimated using a kurtosis penalized likelihood.}
+
+\item{verbose}{A \code{logical}: if this is
+\code{TRUE}, the program will print out additional
+information about the progress of estimation.}
+
+\item{eval.loglik}{{Logical:  If TRUE, evaluate the log-likelihood associated with the fit.}}
+
+\item{...}{Additional arguments to \code{\link{ergm}}.}
 }
 \value{
 An object of class c('tapered.ergm','ergm') containing the fit model. In addition to all of the ergm items,
