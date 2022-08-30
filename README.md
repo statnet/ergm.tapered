@@ -18,20 +18,22 @@ Each ERGM has a corresponding Tapered ERGM. Indeed, the `ergm.tapered` package f
 
 # Installation
 
-The package is available on CRAN and can be installed using
+<!-- The package is available on CRAN and can be installed using -->
 
-```{r}
-install.packages("ergm.tapered")
-```
+<!--```{r} -->
+<!--install.packages("ergm.tapered") -->
+<!--``` -->
 
-To install the latest development version from github, the best way it to use git to create a local copy and install it as usual from there. If you just want to install it, you can also use:
+To install the latest development version from github, you can also use:
 
 ```{r}
 # If devtools is not installed:
 # install.packages("devtools")
 
+devtools::install_github("statnet/ergm", rev="tapered")
 devtools::install_github("statnet/ergm.tapered")
 ```
+For now you will need a development version of `ergm` (the `tapered` branch. In a bit the CRAN version of `ergm` will have it.
 
 # Implementation
 
@@ -134,8 +136,8 @@ summary(fit)
     AIC: 362  BIC: 369.4  (Smaller is better. MC Std. Err. = 0)
 
 This tapered ERGM fits. The summary indicates that the coefficient on
-the transitive triple term is positive (about 0.20) and statistically
-above zero.
+the transitive triple term is positive (about 0.22) and statistically
+above zero. This coefficient has the same interpretation as those in a standard ERGM.
 
 This model fixes the tapering parameter at 2 units. Let’s try to taper
 less by increasing the tapering parameter to 3 (`r=3`):
