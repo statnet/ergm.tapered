@@ -51,7 +51,7 @@ Sampson (1969) recorded the social interactions among a group of monks while he 
      nominated B among these top choices at any one of three time points during the year.
      For details see:
      
-```{r}
+```
 help(sampson)
 ```
 
@@ -61,37 +61,136 @@ We can make a quick visualization of the network
 plot(sampson)
 ```
 
-A natural model is one that includes a term measuring the transitivity of triples in the network, defined as a set of edges {(i,j), (j,k), (i,k)}. 
+![](figures/samplikeplot.png)<!-- -->
 
-```{r}
-fit <- ergm(samplike ~ edges + ttriple)
+A natural model is one that includes a term measuring the transitivity
+of triples in the network, defined as a set of edges {(i,j), (j,k),
+(i,k)}.
+
+``` r
+    fit <- ergm(samplike ~ edges + ttriple)
 ```
-This fit fails to converge computationally as the model is near degenerate. We could try to get it to fit by working on the computational algorithm. However, `ergm.tapered` considers a variant of the ERGM that reflects our prior belief that the true generating process is non-degenerate:
 
-```{r}
+This fit fails to converge computationally as the model is near
+degenerate. We could try to get it to fit by working on the
+computational algorithm. However, `ergm.tapered` considers a variant of
+the ERGM that reflects our prior belief that the true generating process
+is non-degenerate:
+
+``` r
 fit <- ergm.tapered(samplike ~ edges + ttriple)
+```
+
+    Starting maximum pseudolikelihood estimation (MPLE):
+
+    ...
+
+    Iteration 2 of at most 60:
+    Optimizing with step length 1.0000.
+    The log-likelihood improved by 0.0047.
+    Precision adequate twice. Stopping.
+    Finished MCMLE.
+    Evaluating log-likelihood at the estimate. Fitting the dyad-independent submodel...
+    Bridging between the dyad-independent submodel and the full model...
+    Setting up bridge sampling...
+    Using 16 bridges: 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 .
+    Bridging finished.
+    This model was fit using MCMC.  To examine model diagnostics and check
+    for degeneracy, use the mcmc.diagnostics() function.
+
+``` r
 summary(fit)
 ```
 
-This tapered ERGM fits. The summary indicates that the coefficient on the transitive triple term is positive (about 0.20) and statistically above zero. 
+     Results:
 
-This model fixes the tapering parameter at 2 units. 
-Let's try to taper less by increasing the tapering parameter to 3 (`r=3`):
- 
-```{r}
+            Estimate Std. Error MCMC % z value Pr(>|z|)    
+    edges   -1.83992    0.27737      0  -6.634  < 1e-04 ***
+    ttriple  0.21810    0.05816      0   3.750 0.000177 ***
+    ---
+    Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    The estimated tapering scaling factor is 2.
+
+         Null Deviance: 424.2  on 306  degrees of freedom
+     Residual Deviance: 358.0  on 304  degrees of freedom
+     
+    AIC: 362  BIC: 369.4  (Smaller is better. MC Std. Err. = 0)
+
+This tapered ERGM fits. The summary indicates that the coefficient on
+the transitive triple term is positive (about 0.20) and statistically
+above zero.
+
+This model fixes the tapering parameter at 2 units. Let’s try to taper
+less by increasing the tapering parameter to 3 (`r=3`):
+
+``` r
 fit <- ergm.tapered(samplike ~ edges + ttriple, r=3)
+```
+
+    Starting maximum pseudolikelihood estimation (MPLE):
+
+    ...
+
+    Iteration 2 of at most 60:
+    This model was fit using MCMC.  To examine model diagnostics and check
+    for degeneracy, use the mcmc.diagnostics() function.
+
+``` r
 summary(fit)
 ```
+
+     Results:
+
+            Estimate Std. Error MCMC % z value Pr(>|z|)    
+    edges   -1.82890    0.27246      0  -6.712   <1e-04 ***
+    ttriple  0.21174    0.05255      0   4.029   <1e-04 ***
+    ---
+    Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    The estimated tapering scaling factor is 3.
+
+         Null Deviance: 424.2  on 306  degrees of freedom
+     Residual Deviance: 358.6  on 304  degrees of freedom
+     
+    AIC: 362.6  BIC: 370.1  (Smaller is better. MC Std. Err. = 0)
+
 It does not effect it much.
 
-The software allows the tapering to be estimated based on the shape of the distributions of the model statistics. Let's try that:
+The software allows the tapering to be estimated based on the shape of
+the distributions of the model statistics. Let’s try that:
 
-```{r}
+``` r
 fit <- ergm.tapered(samplike ~ edges + ttriple, fixed=FALSE)
+```
+
+    Starting maximum pseudolikelihood estimation (MPLE):
+
+    Iteration 4 of at most 60:
+    Optimizing with step length 1.0000.
+    The log-likelihood improved by 0.0003.
+    Precision adequate twice. Stopping.
+    Finished MCMLE.
+
+``` r
 summary(fit)
 ```
 
-The estimated tapering parameter is about `2.8` (It is printed under the coefficient table). This is between the default value and the second guess. The coefficients of the ERGM terms are about the same as before.
+     Results:
+
+            Estimate Std. Error MCMC % z value Pr(>|z|)    
+    edges   -1.83372    0.28426      0  -6.451   <1e-04 ***
+    ttriple  0.21236    0.09938      0   2.137   0.0326 *  
+    ---
+    Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    The estimated tapering scaling factor is 2.813.
+
+         Null Deviance: 424.2  on 306  degrees of freedom
+     Residual Deviance: 359.0  on 304  degrees of freedom
+     
+    AIC: 365  BIC: 376.2  (Smaller is better. MC Std. Err. = 0)
+
+The estimated tapering parameter is about `2.8` (It is printed under the
+coefficient table). This is between the default value and the second
+guess. The coefficients of the ERGM terms are about the same as before.
 
 Enjoy trying `ergm.tapering`!
 
