@@ -51,7 +51,7 @@ Sampson (1969) recorded the social interactions among a group of monks while he 
      nominated B among these top choices at any one of three time points during the year.
      For details see:
      
-```
+```{r}
 help(sampson)
 ```
 
@@ -63,7 +63,7 @@ plot(sampson)
 
 A natural model is one that includes a term measuring the transitivity of triples in the network, defined as a set of edges {(i,j), (j,k), (i,k)}. 
 
-```
+```{r}
 fit <- ergm(samplike ~ edges + ttriple)
 ```
 This fit fails to converge computationally as the model is near degenerate. We could try to get it to fit by working on the computational algorithm. However, `ergm.tapered` considers a variant of the ERGM that reflects our prior belief that the true generating process is non-degenerate:
@@ -78,7 +78,7 @@ This tapered ERGM fits. The summary indicates that the coefficient on the transi
 This model fixes the tapering parameter at 2 units. 
 Let's try to taper less by increasing the tapering parameter to 3 (`r=3`):
  
-```
+```{r}
 fit <- ergm.tapered(samplike ~ edges + ttriple, r=3)
 summary(fit)
 ```
@@ -86,13 +86,12 @@ It does not effect it much.
 
 The software allows the tapering to be estimated based on the shape of the distributions of the model statistics. Let's try that:
 
-```
+```{r}
 fit <- ergm.tapered(samplike ~ edges + ttriple, fixed=FALSE)
 summary(fit)
 ```
 
 The estimated tapering parameter is about `2.8` (It is printed under the coefficient table). This is between the default value and the second guess. The coefficients of the ERGM terms are about the same as before.
-
 
 Enjoy trying `ergm.tapering`!
 
