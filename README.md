@@ -61,7 +61,7 @@ We can make a quick visualization of the network
 plot(sampson)
 ```
 
-![](figures/samplikeplot.png)<!-- -->
+![](.github/figures/samplikeplot.png)<!-- -->
 
 A natural model is one that includes a term measuring the transitivity
 of triples in the network, defined as a set of edges {(i,j), (j,k),
