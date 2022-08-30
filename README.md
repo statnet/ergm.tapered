@@ -37,7 +37,7 @@ devtools::install_github("statnet/ergm.tapered")
 
 Load package and example data
 
-```
+```{r}
 library(ergm.tapered)
 data(sampson)
 ```
@@ -53,7 +53,7 @@ Sampson (1969) recorded the social interactions among a group of monks while he 
      
 ```
 help(sampson)
-``
+```
 
 We can make a quick visualization of the network
 
@@ -68,7 +68,7 @@ fit <- ergm(samplike ~ edges + ttriple)
 ```
 This fit fails to converge computationally as the model is near degenerate. We could try to get it to fit by working on the computational algorithm. However, `ergm.tapered` considers a variant of the ERGM that reflects our prior belief that the true generating process is non-degenerate:
 
-```
+```{r}
 fit <- ergm.tapered(samplike ~ edges + ttriple)
 summary(fit)
 ```
