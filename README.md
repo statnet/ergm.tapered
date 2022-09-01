@@ -18,20 +18,22 @@ Each ERGM has a corresponding Tapered ERGM. Indeed, the `ergm.tapered` package f
 
 # Installation
 
-The package is available on CRAN and can be installed using
+<!-- The package is available on CRAN and can be installed using -->
 
-```{r}
-install.packages("ergm.tapered")
-```
+<!--```{r} -->
+<!--install.packages("ergm.tapered") -->
+<!--``` -->
 
-To install the latest development version from github, the best way it to use git to create a local copy and install it as usual from there. If you just want to install it, you can also use:
+To install the latest development version from github, you can also use:
 
 ```{r}
 # If devtools is not installed:
 # install.packages("devtools")
 
+devtools::install_github("statnet/ergm", rev="tapered")
 devtools::install_github("statnet/ergm.tapered")
 ```
+For now you will need a development version of `ergm` (the `tapered` branch. In a bit the CRAN version of `ergm` will have it.
 
 # Implementation
 
@@ -71,6 +73,23 @@ of triples in the network, defined as a set of edges {(i,j), (j,k),
     fit <- ergm(samplike ~ edges + ttriple)
 ```
 
+    Starting maximum pseudolikelihood estimation (MPLE):
+
+    ...
+
+    Optimizing with step length 0.0054.
+    The log-likelihood improved by 27.9793.
+    Estimating equations are not within tolerance region.
+    Iteration 3 of at most 60:
+    Error in ergm.MCMLE(init, nw, model, initialfit = (initialfit <- NULL),  : 
+      Unconstrained MCMC sampling did not mix at all. Optimization cannot continue.
+    Calls: ergm -> ergm.MCMLE
+    In addition: Warning message:
+    In ergm_MCMC_sample(s, control, theta = mcmc.init, verbose = max(verbose -  :
+      Unable to reach target effective size in iterations alotted.
+    Calls: ergm -> ergm.MCMLE -> ergm_MCMC_sample
+   
+
 This fit fails to converge computationally as the model is near
 degenerate. We could try to get it to fit by working on the
 computational algorithm. However, `ergm.tapered` considers a variant of
@@ -81,7 +100,7 @@ is non-degenerate:
 fit <- ergm.tapered(samplike ~ edges + ttriple)
 ```
 
-    Starting maximum pseudolikelihood estimation (MPLE):
+ Starting maximum pseudolikelihood estimation (MPLE):
 
     ...
 
@@ -117,8 +136,8 @@ summary(fit)
     AIC: 362  BIC: 369.4  (Smaller is better. MC Std. Err. = 0)
 
 This tapered ERGM fits. The summary indicates that the coefficient on
-the transitive triple term is positive (about 0.20) and statistically
-above zero.
+the transitive triple term is positive (about 0.22) and statistically
+above zero. This coefficient has the same interpretation as those in a standard ERGM.
 
 This model fixes the tapering parameter at 2 units. Let’s try to taper
 less by increasing the tapering parameter to 3 (`r=3`):
