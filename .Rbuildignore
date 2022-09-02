@@ -9,3 +9,4 @@ appveyor.yml
 .gdb_history
 .github
 man-roxygen
+^codecov.yml$
