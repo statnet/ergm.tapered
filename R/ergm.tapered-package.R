@@ -34,17 +34,24 @@
 #' \email{ian@fellstat.com}
 #' 
 #' Maintainer: Mark S. Handcock \email{handcock@@stat.ucla.edu}
-#' @references 
-#' Fellows, I and Handcock, MS (2017). Removing Phase Transitions from Gibbs Measures. Proceedings of Machine Learning Research, 54:289-297.
-#' 
-#' Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003a).
+#' @references \itemize{ 
+#' * Fellows, I. and M. S. Handcock (2017), 
+#' Removing Phase Transitions from Gibbs Measures. Volume 54 of 
+#' Proceedings of Machine Learning Research, Fort Lauderdale,
+#' FL, USA, pp. 289–297. PMLR.
+#' * Blackburn, B. and M. S. Handcock (2022), 
+#' Practical Network Modeling via Tapered Exponential-family Random Graph Models.
+#' Journal of Computational and Graphical Statistics
+#' \doi{10.1080/10618600.2022.2116444}.
+#' * Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003a).
 #' \pkg{ergm}: A Package to Fit, Simulate and Diagnose Exponential-Family
 #' Models for Networks.  Statnet Project, Seattle, WA.  Version 3,
 #' \url{https://statnet.org}.
-#' 
-#' Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003b).
+#' * Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003b).
 #' \pkg{statnet}: Software Tools for the Statistical Modeling of Network Data.
 #' Statnet Project, Seattle, WA.  Version 3, \url{https://statnet.org}.
+#' 
+#' }
 #' @keywords package models
 #' @useDynLib ergm.tapered
 NULL

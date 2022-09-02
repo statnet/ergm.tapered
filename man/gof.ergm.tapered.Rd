@@ -46,7 +46,19 @@ summary(fit)
 }
 }
 \references{
-Fellows, I and Handcock, MS (2017). Removing Phase Transitions from Gibbs Measures. Proceedings of Machine Learning Research, 54:289-297.
+\itemize{
+\itemize{
+\item Fellows, I. and M. S. Handcock (2017),
+Removing Phase Transitions from Gibbs Measures. Volume 54 of
+Proceedings of Machine Learning Research, Fort Lauderdale,
+FL, USA, pp. 289–297. PMLR.
+\item Blackburn, B. and M. S. Handcock (2022),
+Practical Network Modeling via Tapered Exponential-family Random Graph Models.
+Journal of Computational and Graphical Statistics
+\doi{10.1080/10618600.2022.2116444}.
+}
+
+}
 }
 \seealso{
 \code{\link[ergm:ergm]{ergm::ergm()}}, \code{\link[network:network]{network::network()}}, \code{\link[ergm:simulate.ergm]{ergm::simulate.ergm()}}, \code{\link[ergm:summary.ergm]{ergm::summary.ergm()}}, \code{\link[ergm:gof]{ergm::gof.ergm()}}
