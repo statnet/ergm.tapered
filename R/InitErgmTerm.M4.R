@@ -22,6 +22,9 @@
 #'    network if \code{formula} is one-sided and that of the network on
 #'    the LHS of \code{formula} if it is two-sided.
 #'
+#' @template ergmTerm-general
+#'
+#' @concept operator
 #' @concept tapered
 #' @import ergm statnet.common network
 InitErgmTerm.M4 <- function(nw, arglist, response=NULL, ...){
