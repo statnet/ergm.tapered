@@ -24,3 +24,6 @@ License: GPL-3
 Roxygen: list(markdown = TRUE)
 Encoding: UTF-8
 RoxygenNote: 7.2.1
+Remotes: github::statnet/statnet.common@master,
+    github::statnet/network@master,
+    github::statnet/ergm@control_llik
