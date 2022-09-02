@@ -71,6 +71,10 @@ See the \code{usage} section in \code{\link[=ergm]{ergm()}} for details.
 Removing Phase Transitions from Gibbs Measures. Volume 54 of
 Proceedings of Machine Learning Research, Fort Lauderdale,
 FL, USA, pp. 289–297. PMLR.
+\item Blackburn, B. and M. S. Handcock (2022),
+Practical Network Modeling via Tapered Exponential-family Random Graph Models.
+Journal of Computational and Graphical Statistics
+\doi{10.1080/10618600.2022.2116444}.
 }
 
 }

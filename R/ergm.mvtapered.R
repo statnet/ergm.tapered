@@ -12,7 +12,7 @@
 #' }
 #' @param tapering.centers The centers of the tapering terms. If null, these are taken to be the mean value parameters.
 #' @param family The type of tapering used. This should either be the \code{stereo} or \code{taper}, the 
-#' tapering model of Fellows and Handcock (2016).
+#' tapering model of Fellows and Handcock (2017).
 #' @param taper.terms Specification of the tapering used. If the character variable "dependence" then all the dependent
 #' terms are tapered. If the character variable "all" then all terms are tapered.
 #' It can also be the RHS of a formula giving the terms to be tapered. 
@@ -23,8 +23,17 @@
 #' this object contains tapering.centers, tapering.coef and orig.formula. tapering.centers are the centers for the tapering term.
 #' tapering.coef are the tapering coefficients = 1/ beta^2. orig.formula is the formula passed into ergm.tapered.
 #' @importFrom stats var as.formula
-#' @references 
-#' Fellows, I and Handcock, MS (2017). Removing Phase Transitions from Gibbs Measures. Proceedings of Machine Learning Research, 54:289-297.
+#' @references \itemize{ 
+#' * Fellows, I. and M. S. Handcock (2017), 
+#' Removing Phase Transitions from Gibbs Measures. Volume 54 of 
+#' Proceedings of Machine Learning Research, Fort Lauderdale,
+#' FL, USA, pp. 289–297. PMLR.
+#' * Blackburn, B. and M. S. Handcock (2022), 
+#' Practical Network Modeling via Tapered Exponential-family Random Graph Models.
+#' Journal of Computational and Graphical Statistics
+#' \doi{10.1080/10618600.2022.2116444}.
+#' 
+#' }
 #' @examples 
 #' \dontrun{
 #' data(sampson)

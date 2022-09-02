@@ -27,8 +27,17 @@
 #' plotted using \code{\link{plot.gof}}.
 #' @seealso [ergm::ergm()], [network::network()], [ergm::simulate.ergm()], [ergm::summary.ergm()], [ergm::gof.ergm()]
 #' @keywords models
-#' @references 
-#' Fellows, I and Handcock, MS (2017). Removing Phase Transitions from Gibbs Measures. Proceedings of Machine Learning Research, 54:289-297.
+#' @references \itemize{ 
+#' * Fellows, I. and M. S. Handcock (2017), 
+#' Removing Phase Transitions from Gibbs Measures. Volume 54 of 
+#' Proceedings of Machine Learning Research, Fort Lauderdale,
+#' FL, USA, pp. 289–297. PMLR.
+#' * Blackburn, B. and M. S. Handcock (2022), 
+#' Practical Network Modeling via Tapered Exponential-family Random Graph Models.
+#' Journal of Computational and Graphical Statistics
+#' \doi{10.1080/10618600.2022.2116444}.
+#' 
+#' }
 #' @examples 
 #' \dontrun{
 #' data(sampson)

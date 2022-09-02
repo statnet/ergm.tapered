@@ -33,7 +33,7 @@ statistics of the network in the formula.
 \item{tapering.centers}{The centers of the tapering terms. If null, these are taken to be the mean value parameters.}
 
 \item{family}{The type of tapering used. This should either be the \code{stereo} or \code{taper}, the
-tapering model of Fellows and Handcock (2016).}
+tapering model of Fellows and Handcock (2017).}
 
 \item{taper.terms}{Specification of the tapering used. If the character variable "dependence" then all the dependent
 terms are tapered. If the character variable "all" then all terms are tapered.
@@ -59,5 +59,17 @@ summary(fit)
 }
 }
 \references{
-Fellows, I and Handcock, MS (2017). Removing Phase Transitions from Gibbs Measures. Proceedings of Machine Learning Research, 54:289-297.
+\itemize{
+\itemize{
+\item Fellows, I. and M. S. Handcock (2017),
+Removing Phase Transitions from Gibbs Measures. Volume 54 of
+Proceedings of Machine Learning Research, Fort Lauderdale,
+FL, USA, pp. 289–297. PMLR.
+\item Blackburn, B. and M. S. Handcock (2022),
+Practical Network Modeling via Tapered Exponential-family Random Graph Models.
+Journal of Computational and Graphical Statistics
+\doi{10.1080/10618600.2022.2116444}.
+}
+
+}
 }
