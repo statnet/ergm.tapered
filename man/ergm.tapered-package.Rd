@@ -10,6 +10,8 @@ diagnose, and simulate from Tapered exponential-family random graph models (ERGM
 For a list of functions type: \code{help(package='ergm.tapered')}
 }
 \details{
+A good place to start is the vignette at \url{https://github.com/statnet/ergm.tapered}
+and the first two referenced papers below.
 For a complete list of the functions, use \code{library(help="ergm.tapered")} or
 read the rest of the manual.
 
@@ -29,7 +31,7 @@ estimates of ERGMs to be calculated using Markov Chain Monte Carlo (via
 \code{\link{mcmc.diagnostics}} and \code{\link{gof.ergm.tapered}}).
 
 For detailed information on how to download and install the software, go to
-the \code{\link[=ergm-package]{ergm}} website: \url{https://statnet.org}. A
+the \code{\link[=ergm.tapered-package]{ergm.tapered}} website: \url{https://statnet.org}. A
 tutorial, support newsgroup, references and links to further resources are
 provided there.
 }
@@ -57,7 +59,7 @@ Statnet Project, Seattle, WA.  Version 3, \url{https://statnet.org}.
 }
 \author{
 Mark S. Handcock \email{handcock@stat.ucla.edu},\cr Pavel N. Krivitsky
-\email{krivitsky@stat.psu.edu}, and\cr Ian E. Fellows
+\email{pavel@statnet.org}, and\cr Ian E. Fellows
 \email{ian@fellstat.com}
 
 Maintainer: Mark S. Handcock \email{handcock@stat.ucla.edu}

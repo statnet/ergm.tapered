@@ -85,7 +85,11 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
 
   # Determine the dyadic independence terms
   nw <- ergm.getnetwork(formula)
-  m<-ergm_model(formula, nw, response=response, ...)
+  primary.response <- response
+  ergm_preprocess_response(nw,primary.response)
+
+  proposal <- list(auxiliaries=NULL)
+  m<-ergm_model(formula, nw, x=NVL3(proposal$auxiliaries,list(proposal=.)), term.options=control$term.options, ...)
 
   if(is.null(tapering.centers)) tapering.centers <- target.stats
 
@@ -219,7 +223,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     message("\n")
   }
   
-  re.names <- names(summary(newformula))
+  re.names <- names(summary(newformula, response=response))
   if(!fixed){
     control$init <- c(control$init,1)
     names(control$init)[length(control$init)] <- "Taper_Penalty"
@@ -233,12 +237,14 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     }
   }
 
-  # fit ergm
-  fit.MPLE.control <- control
-  fit.MPLE.control$init <- NULL
-  fit.MPLE.control$MPLE.save.xmat <- TRUE
-  fit.MPLE <- ergm(reformula, control=fit.MPLE.control, estimate="MPLE",
-                   response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
+  if(!is.valued(nw)){
+  # fit binary ergm
+    fit.MPLE.control <- control
+    fit.MPLE.control$init <- NULL
+    fit.MPLE.control$MPLE.save.xmat <- TRUE
+    fit.MPLE <- ergm(reformula, control=fit.MPLE.control, estimate="MPLE",
+                     response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
+  }
   if(is.null(target.stats)){
     fit <- ergm(newformula, control=control,
                 response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
@@ -287,8 +293,10 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   fcoef[seq_along(fulltau)[!is.na(nm)]] <- fcoef[nm[!is.na(nm)]]
   fit$tapering.coefficients <- fulltau
   fit$taudelta.offset <- 2*fulltau*as.vector(apply(sapply(fit$sample,function(x){apply(x[,-ncol(x)],2,sd)}),1,mean))
-  fit$taudelta.mean <- apply((2*fit.MPLE$glm.result$value$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$glm.result$value$prior.weights)
-  fit$taudelta.mad <- apply((2*fit.MPLE$glm.result$value$model[,1]-1)*sweep(abs(fit.MPLE$xmat.full),2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$value$glm.result$prior.weights)
+  if(!is.valued(nw)){
+    fit$taudelta.mean <- apply((2*fit.MPLE$glm.result$value$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$glm.result$value$prior.weights)
+    fit$taudelta.mad <- apply((2*fit.MPLE$glm.result$value$model[,1]-1)*sweep(abs(fit.MPLE$xmat.full),2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$value$glm.result$prior.weights)
+  }
 
   # post process fit to alter Hessian etc
   if(is.null(tapering.centers)){
