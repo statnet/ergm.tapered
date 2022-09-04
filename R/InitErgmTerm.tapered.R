@@ -23,6 +23,12 @@
 #'    the LHS of \code{formula} if it is two-sided.
 #'
 #' @template ergmTerm-general
+#' @template ergmTerm-taper-references
+#'
+#' @examples
+#' data(florentine)
+#' m <- summary(flomarriage~edges + triangles)
+#' summary(ergm(flomarriage ~ Taper(~edges + triangles, coef=c(.1, .1),m=m)))
 #'
 #' @concept operator
 #' @concept tapered

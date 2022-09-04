@@ -22,6 +22,7 @@
 #'    the LHS of \code{formula} if it is two-sided.
 #'
 #' @template ergmTerm-general
+#' @template ergmTerm-taper-references
 #'
 #' @concept operator
 #' @concept tapered
