@@ -219,7 +219,7 @@ See the following papers for more information and examples:
 
 #### Statistical Methodology
 
-* Fellows, Ian E. and Handcock, Mark S. (2017) [Removing Phase Transitions from Gibbs Measures](http://proceedings.mlr.press/v54/fellows17a/fellows17a.pdf), *Proceedings of the 20th International Conference on Artificial Intelligence and Statistics (AISTATS)s*, Volume 54.
+* Fellows, Ian E. and Handcock, Mark S. (2017) [Removing Phase Transitions from Gibbs Measures](https://proceedings.mlr.press/v54/fellows17a/fellows17a.pdf), *Proceedings of the 20th International Conference on Artificial Intelligence and Statistics (AISTATS)s*, Volume 54.
 * Blackburn, Bart and Handcock, Mark S. (2022) [Practical Network Modeling via Tapered Exponential-family Random Graph Models](https://doi.org/10.1080/10618600.2022.2116444), *Journal of Computational and Graphical Statistics*.
 
 <!-- #### Applications -->

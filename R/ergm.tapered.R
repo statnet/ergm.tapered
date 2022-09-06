@@ -104,7 +104,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
      for(i in seq_along(tmp)){if(a[i]){taper.terms <- c(taper.terms,tmp[[i]])}}
      taper_formula <- append_rhs.formula(~.,taper.terms, env=NULL)
      trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,taper.terms){all(term != taper.terms)}, taper.terms))
-     reformula <- append_rhs.formula(trimmed_formula,taper_formula, env=NULL) 
+     reformula <- append_rhs.formula(trimmed_formula,taper_formula) 
    }else{if(taper.terms=="all"){
      taper.terms <- list_rhs.formula(formula)
      taper_formula <- append_rhs.formula(~.,taper.terms, env=NULL)
@@ -117,13 +117,13 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     taper.terms <- list_rhs.formula(taper.terms)
     taper_formula <- append_rhs.formula(~.,taper.terms, env=NULL)
     trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,taper.terms){all(term != taper.terms)}, taper.terms))
-    reformula <- append_rhs.formula(trimmed_formula,taper_formula, env=NULL) 
+    reformula <- append_rhs.formula(trimmed_formula,taper_formula) 
    }}
   }else{
     taper_formula <- taper.terms
     taper.terms <- list_rhs.formula(taper.terms)
     trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,taper.terms){all(term != taper.terms)}, taper.terms))
-    reformula <- append_rhs.formula(trimmed_formula,taper_formula, env=NULL) 
+    reformula <- append_rhs.formula(trimmed_formula,taper_formula) 
   }
   attr(taper.terms,"env") <- NULL
   taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms), response=response, ...)
@@ -170,33 +170,26 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
 
   taper_terms <- switch(paste0(family,ifelse(fixed,"_fixed","_notfixed")),
     "stereo_fixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
-              environment(), from.new=TRUE), 
+              from.new=TRUE), 
     "stereo_notfixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
-              environment(), from.new=TRUE), 
-    "taper_fixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
-              environment(), from.new=TRUE), 
-    "taper_notfixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Kpenalty(~.,coef=.taper.coef,m=.taper.center),
-              environment(), from.new=TRUE),
-             statnet.common::nonsimp_update.formula(taper_formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
-              environment(), from.new=TRUE)
+              from.new=TRUE), 
+    "taper_fixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Taper(~.,coef=.taper.coef,m=.taper.center)),
+    "taper_notfixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Kpenalty(~.,coef=.taper.coef,m=.taper.center)),
+             statnet.common::nonsimp_update.formula(taper_formula,.~Taper(~.,coef=.taper.coef,m=.taper.center))
       )
 
   if(length(list_rhs.formula(formula))==length(taper.terms)){
     newformula <- switch(paste0(family,ifelse(fixed,"_fixed","_notfixed")),
-      "stereo_fixed"=statnet.common::nonsimp_update.formula(formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
-                environment(), from.new=TRUE), 
-      "stereo_notfixed"=statnet.common::nonsimp_update.formula(formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
-                environment(), from.new=TRUE), 
-      "taper_fixed"=statnet.common::nonsimp_update.formula(formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
-                environment(), from.new=TRUE), 
-      "taper_notfixed"=statnet.common::nonsimp_update.formula(formula,.~Kpenalty(~.,coef=.taper.coef,m=.taper.center),
-                environment(), from.new=TRUE),
-               statnet.common::nonsimp_update.formula(formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
-                environment(), from.new=TRUE) 
+      "stereo_fixed"=statnet.common::nonsimp_update.formula(formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center)),
+                
+      "stereo_notfixed"=statnet.common::nonsimp_update.formula(formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center)),
+      "taper_fixed"=statnet.common::nonsimp_update.formula(formula,.~Taper(~.,coef=.taper.coef,m=.taper.center)),
+      "taper_notfixed"=statnet.common::nonsimp_update.formula(formula,.~Kpenalty(~.,coef=.taper.coef,m=.taper.center)),
+               statnet.common::nonsimp_update.formula(formula,.~Taper(~.,coef=.taper.coef,m=.taper.center))
 	       )
 
   }else{
-    newformula <- append_rhs.formula(trimmed_formula,taper_terms, env=NULL) 
+    newformula <- append_rhs.formula(trimmed_formula,taper_terms) 
   }
   ostats <- summary(reformula, response=response, ...)
   if(!is.null(tapering.centers)){
@@ -230,8 +223,8 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     control$init <- control$init[match(re.names,names(control$init))]
   }else{
     if(!is.null(control$init)){
-      warning("check the names are ordered correctly (not coded yet)")
-      print(control$init)
+    # warning("check that the names of the statistics are ordered correctly in the init vector.  Checks have not been coded yet)")
+    # print(control$init)
       re.names <- re.names[-length(re.names)]
       names(control$init) <- re.names
     }
