@@ -16,6 +16,7 @@ ergm.tapered(
   response = NULL,
   constraints = ~.,
   reference = ~Bernoulli,
+  estimate = c("MLE", "MPLE", "CD"),
   control = control.ergm.tapered(),
   fixed = TRUE,
   verbose = FALSE,
@@ -56,16 +57,14 @@ It can also be the RHS of a formula giving the terms to be tapered.}
 modeled in the valued ERGM framework. Defaults to \code{NULL} for
 simple presence or absence, modeled via a binary ERGM.}}
 
-\item{constraints}{{A formula specifying one or more constraints
-on the support of the distribution of the networks being modeled,
-using syntax similar to the \code{formula} argument, on the
-right-hand side. See \link[=ergm-constraints]{ERGM constraints}
-\code{\link{ergm}} for details.}}
-
-\item{reference}{{A one-sided formula specifying
-the reference measure (\eqn{h(y)}) to be used.
-See help for \link[=ergm-references]{ERGM reference measures} implemented in the
-\strong{\link[=ergm-package]{ergm}} package.}}
+\item{estimate}{{If "MPLE," then the maximum pseudolikelihood estimator
+is returned.  If "MLE" (the default), then an approximate maximum likelihood
+estimator is returned.  For certain models, the MPLE and MLE are equivalent,
+in which case this argument is ignored.  (To force MCMC-based approximate
+likelihood calculation even when the MLE and MPLE are the same, see the
+\code{force.main} argument of \code{\link{control.ergm}}. If "CD" (\emph{EXPERIMENTAL}),
+the Monte-Carlo contrastive divergence estimate is returned. )
+}}
 
 \item{control}{An object of class control.ergm. Passed to the ergm function.}
 

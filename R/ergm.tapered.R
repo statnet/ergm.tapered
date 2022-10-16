@@ -22,15 +22,23 @@
 #' @param response {Name of the edge attribute whose value is to be
 #' modeled in the valued ERGM framework. Defaults to \code{NULL} for
 #' simple presence or absence, modeled via a binary ERGM.}
-#' @param reference {A one-sided formula specifying
-#' the reference measure (\eqn{h(y)}) to be used.
-#' See help for \link[=ergm-references]{ERGM reference measures} implemented in the
-#' \strong{\link[=ergm-package]{ergm}} package.}
 #' @param constraints {A formula specifying one or more constraints
 #' on the support of the distribution of the networks being modeled,
 #' using syntax similar to the \code{formula} argument, on the
 #' right-hand side. See \link[=ergm-constraints]{ERGM constraints} 
+#' @param reference {A one-sided formula specifying
+#' the reference measure (\eqn{h(y)}) to be used.
+#' See help for \link[=ergm-references]{ERGM reference measures} implemented in the
+#' \strong{\link[=ergm-package]{ergm}} package.}
 #' \code{\link{ergm}} for details.}
+#' @param estimate {If "MPLE," then the maximum pseudolikelihood estimator
+#' is returned.  If "MLE" (the default), then an approximate maximum likelihood
+#' estimator is returned.  For certain models, the MPLE and MLE are equivalent,
+#' in which case this argument is ignored.  (To force MCMC-based approximate
+#' likelihood calculation even when the MLE and MPLE are the same, see the
+#' \code{force.main} argument of \code{\link{control.ergm}}. If "CD" (\emph{EXPERIMENTAL}),
+#' the Monte-Carlo contrastive divergence estimate is returned. )
+#' }
 #' @param control An object of class control.ergm. Passed to the ergm function.
 #' @param fixed A `logical`: if this is \code{TRUE}, the tapering is fixed at the passed values. 
 #' If this is \code{FALSE}, the tapering is estimated using a kurtosis penalized likelihood.
@@ -66,6 +74,7 @@
 ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NULL, target.stats=NULL,
 			 family="taper", taper.terms="all",
                          response=NULL, constraints=~., reference=~Bernoulli,
+			 estimate=c("MLE", "MPLE", "CD"),
                          control = control.ergm.tapered(), fixed=TRUE, verbose=FALSE, eval.loglik=TRUE, ...){
 
   if(!methods::is(control,"control.ergm.tapered")){
@@ -89,6 +98,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
 
   if(is.null(tapering.centers)) tapering.centers <- target.stats
 
+  estimate <- match.arg(estimate)
   
   # set tapering terms
   if(is.character(taper.terms) & length(taper.terms)==1){
@@ -122,7 +132,11 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     reformula <- append_rhs.formula(trimmed_formula,taper_formula, env=NULL) 
   }
   attr(taper.terms,"env") <- NULL
-  taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms), response=response, ...)
+  if(is.null(target.stats)){
+    taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms), response=response, ...)
+  }else{
+    taper.stats <- target.stats
+  }
 
   # set tapering coefficient
   tau <- switch(family,
@@ -227,7 +241,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   }else{
     if(!is.null(control$init)){
       warning("check the names are ordered correctly (not coded yet)")
-      print(control$init)
+     #print(control$init)
       re.names <- re.names[-length(re.names)]
       names(control$init) <- re.names
     }
@@ -239,13 +253,35 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   fit.MPLE.control$MPLE.save.xmat <- TRUE
   fit.MPLE <- ergm(reformula, control=fit.MPLE.control, estimate="MPLE",
                    response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
-  if(is.null(target.stats)){
-    fit <- ergm(newformula, control=control,
-                response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
-  }else{
-    fit <- ergm(newformula, control=control, target.stats=ostats, offset.coef=tau,
-                response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
+  if(!is.null(target.stats)){
+    target.stats.aug <- c(target.stats,NA)
+    names(target.stats.aug) <- re.names
+    names(target.stats) <- re.names[1:length(target.stats)]
+    for( i in 1:100){
+      sanformula <- statnet.common::nonsimp_update.formula(newformula,nw ~ .)
+      env$.taper.center <- target.stats
+      env$.taper.coef <- tau
+      env$nw <- nw
+      environment(sanformula) <- env
+      if(verbose){
+        message(sprintf("Computing SAN network\n"))
+      }
+      nw <- san(sanformula,target.stats=target.stats,
+                control=control.san(SAN.maxit=10, SAN.exclude.statistics="Taper_Penalty", parallel=control$parallel))
+    }
+    env$.taper.center <- target.stats
+    env$.taper.coef <- tau
+    env$nw <- nw
+    environment(sanformula) <- env
+   #if(verbose){
+      message(sprintf("SAN network compared to target statistics:\n"))
+      print(cbind(target.stats, summary(sanformula)[-length(target.stats)-1]))
+   #}
+    newformula <- sanformula
   }
+  fit <- ergm(newformula, control=control,
+              response=response, constraints=constraints, reference=reference, estimate=estimate,
+              eval.loglik=eval.loglik, verbose=verbose, ...)
   
   fit$tapering.centers <- taper.stats
   fit$tapering.centers.o <- ostats
@@ -270,6 +306,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   }
   fit$orig.formula <- formula
 
+  if(estimate == "MLE"){
   if(fixed){
     sample <- as.matrix(fit$sample)[,1:npar,drop=FALSE]
     fit$hessian <- fit$hessian[1:npar,1:npar]
@@ -308,6 +345,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
       fit$covar <- -fit$covar 
       fit$hessian <- -fit$hessian 
     }
+  }
   }
 
   class(fit) <- c("ergm.tapered",family,class(fit))
