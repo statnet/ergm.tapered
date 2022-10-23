@@ -22,23 +22,15 @@
 #' @param response {Name of the edge attribute whose value is to be
 #' modeled in the valued ERGM framework. Defaults to \code{NULL} for
 #' simple presence or absence, modeled via a binary ERGM.}
-#' @param constraints {A formula specifying one or more constraints
-#' on the support of the distribution of the networks being modeled,
-#' using syntax similar to the \code{formula} argument, on the
-#' right-hand side. See \link[=ergm-constraints]{ERGM constraints} 
 #' @param reference {A one-sided formula specifying
 #' the reference measure (\eqn{h(y)}) to be used.
 #' See help for \link[=ergm-references]{ERGM reference measures} implemented in the
 #' \strong{\link[=ergm-package]{ergm}} package.}
+#' @param constraints {A formula specifying one or more constraints
+#' on the support of the distribution of the networks being modeled,
+#' using syntax similar to the \code{formula} argument, on the
+#' right-hand side. See \link[=ergm-constraints]{ERGM constraints} 
 #' \code{\link{ergm}} for details.}
-#' @param estimate {If "MPLE," then the maximum pseudolikelihood estimator
-#' is returned.  If "MLE" (the default), then an approximate maximum likelihood
-#' estimator is returned.  For certain models, the MPLE and MLE are equivalent,
-#' in which case this argument is ignored.  (To force MCMC-based approximate
-#' likelihood calculation even when the MLE and MPLE are the same, see the
-#' \code{force.main} argument of \code{\link{control.ergm}}. If "CD" (\emph{EXPERIMENTAL}),
-#' the Monte-Carlo contrastive divergence estimate is returned. )
-#' }
 #' @param control An object of class control.ergm. Passed to the ergm function.
 #' @param fixed A `logical`: if this is \code{TRUE}, the tapering is fixed at the passed values. 
 #' If this is \code{FALSE}, the tapering is estimated using a kurtosis penalized likelihood.
@@ -74,7 +66,6 @@
 ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NULL, target.stats=NULL,
 			 family="taper", taper.terms="all",
                          response=NULL, constraints=~., reference=~Bernoulli,
-			 estimate=c("MLE", "MPLE", "CD"),
                          control = control.ergm.tapered(), fixed=TRUE, verbose=FALSE, eval.loglik=TRUE, ...){
 
   if(!methods::is(control,"control.ergm.tapered")){
@@ -94,11 +85,14 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
 
   # Determine the dyadic independence terms
   nw <- ergm.getnetwork(formula)
-  m<-ergm_model(formula, nw, response=response, ...)
+  primary.response <- response
+  ergm_preprocess_response(nw,primary.response)
+
+  proposal <- list(auxiliaries=NULL)
+  m<-ergm_model(formula, nw, x=NVL3(proposal$auxiliaries,list(proposal=.)), term.options=control$term.options, ...)
 
   if(is.null(tapering.centers)) tapering.centers <- target.stats
 
-  estimate <- match.arg(estimate)
   
   # set tapering terms
   if(is.character(taper.terms) & length(taper.terms)==1){
@@ -110,7 +104,7 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
      for(i in seq_along(tmp)){if(a[i]){taper.terms <- c(taper.terms,tmp[[i]])}}
      taper_formula <- append_rhs.formula(~.,taper.terms, env=NULL)
      trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,taper.terms){all(term != taper.terms)}, taper.terms))
-     reformula <- append_rhs.formula(trimmed_formula,taper_formula, env=NULL) 
+     reformula <- append_rhs.formula(trimmed_formula,taper_formula) 
    }else{if(taper.terms=="all"){
      taper.terms <- list_rhs.formula(formula)
      taper_formula <- append_rhs.formula(~.,taper.terms, env=NULL)
@@ -123,20 +117,16 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     taper.terms <- list_rhs.formula(taper.terms)
     taper_formula <- append_rhs.formula(~.,taper.terms, env=NULL)
     trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,taper.terms){all(term != taper.terms)}, taper.terms))
-    reformula <- append_rhs.formula(trimmed_formula,taper_formula, env=NULL) 
+    reformula <- append_rhs.formula(trimmed_formula,taper_formula) 
    }}
   }else{
     taper_formula <- taper.terms
     taper.terms <- list_rhs.formula(taper.terms)
     trimmed_formula=suppressWarnings(filter_rhs.formula(formula, function(term,taper.terms){all(term != taper.terms)}, taper.terms))
-    reformula <- append_rhs.formula(trimmed_formula,taper_formula, env=NULL) 
+    reformula <- append_rhs.formula(trimmed_formula,taper_formula) 
   }
   attr(taper.terms,"env") <- NULL
-  if(is.null(target.stats)){
-    taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms), response=response, ...)
-  }else{
-    taper.stats <- target.stats
-  }
+  taper.stats <- summary(append_rhs.formula(nw ~.,taper.terms), response=response, ...)
 
   # set tapering coefficient
   tau <- switch(family,
@@ -180,33 +170,26 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
 
   taper_terms <- switch(paste0(family,ifelse(fixed,"_fixed","_notfixed")),
     "stereo_fixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
-              environment(), from.new=TRUE), 
+              from.new=TRUE), 
     "stereo_notfixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
-              environment(), from.new=TRUE), 
-    "taper_fixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
-              environment(), from.new=TRUE), 
-    "taper_notfixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Kpenalty(~.,coef=.taper.coef,m=.taper.center),
-              environment(), from.new=TRUE),
-             statnet.common::nonsimp_update.formula(taper_formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
-              environment(), from.new=TRUE)
+              from.new=TRUE), 
+    "taper_fixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Taper(~.,coef=.taper.coef,m=.taper.center)),
+    "taper_notfixed"=statnet.common::nonsimp_update.formula(taper_formula,.~Kpenalty(~.,coef=.taper.coef,m=.taper.center)),
+             statnet.common::nonsimp_update.formula(taper_formula,.~Taper(~.,coef=.taper.coef,m=.taper.center))
       )
 
   if(length(list_rhs.formula(formula))==length(taper.terms)){
     newformula <- switch(paste0(family,ifelse(fixed,"_fixed","_notfixed")),
-      "stereo_fixed"=statnet.common::nonsimp_update.formula(formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
-                environment(), from.new=TRUE), 
-      "stereo_notfixed"=statnet.common::nonsimp_update.formula(formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center),
-                environment(), from.new=TRUE), 
-      "taper_fixed"=statnet.common::nonsimp_update.formula(formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
-                environment(), from.new=TRUE), 
-      "taper_notfixed"=statnet.common::nonsimp_update.formula(formula,.~Kpenalty(~.,coef=.taper.coef,m=.taper.center),
-                environment(), from.new=TRUE),
-               statnet.common::nonsimp_update.formula(formula,.~Taper(~.,coef=.taper.coef,m=.taper.center),
-                environment(), from.new=TRUE) 
+      "stereo_fixed"=statnet.common::nonsimp_update.formula(formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center)),
+                
+      "stereo_notfixed"=statnet.common::nonsimp_update.formula(formula,.~Stereo(~.,coef=.taper.coef,m=.taper.center)),
+      "taper_fixed"=statnet.common::nonsimp_update.formula(formula,.~Taper(~.,coef=.taper.coef,m=.taper.center)),
+      "taper_notfixed"=statnet.common::nonsimp_update.formula(formula,.~Kpenalty(~.,coef=.taper.coef,m=.taper.center)),
+               statnet.common::nonsimp_update.formula(formula,.~Taper(~.,coef=.taper.coef,m=.taper.center))
 	       )
 
   }else{
-    newformula <- append_rhs.formula(trimmed_formula,taper_terms, env=NULL) 
+    newformula <- append_rhs.formula(trimmed_formula,taper_terms) 
   }
   ostats <- summary(reformula, response=response, ...)
   if(!is.null(tapering.centers)){
@@ -233,55 +216,35 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
     message("\n")
   }
   
-  re.names <- names(summary(newformula))
+  re.names <- names(summary(newformula, response=response))
   if(!fixed){
     control$init <- c(control$init,1)
     names(control$init)[length(control$init)] <- "Taper_Penalty"
     control$init <- control$init[match(re.names,names(control$init))]
   }else{
     if(!is.null(control$init)){
-      warning("check the names are ordered correctly (not coded yet)")
-     #print(control$init)
+    # warning("check that the names of the statistics are ordered correctly in the init vector.  Checks have not been coded yet)")
+    # print(control$init)
       re.names <- re.names[-length(re.names)]
       names(control$init) <- re.names
     }
   }
 
-  # fit ergm
-  fit.MPLE.control <- control
-  fit.MPLE.control$init <- NULL
-  fit.MPLE.control$MPLE.save.xmat <- TRUE
-  fit.MPLE <- ergm(reformula, control=fit.MPLE.control, estimate="MPLE",
-                   response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
-  if(!is.null(target.stats)){
-    target.stats.aug <- c(target.stats,NA)
-    names(target.stats.aug) <- re.names
-    names(target.stats) <- re.names[1:length(target.stats)]
-    for( i in 1:100){
-      sanformula <- statnet.common::nonsimp_update.formula(newformula,nw ~ .)
-      env$.taper.center <- target.stats
-      env$.taper.coef <- tau
-      env$nw <- nw
-      environment(sanformula) <- env
-      if(verbose){
-        message(sprintf("Computing SAN network\n"))
-      }
-      nw <- san(sanformula,target.stats=target.stats,
-                control=control.san(SAN.maxit=10, SAN.exclude.statistics="Taper_Penalty", parallel=control$parallel))
-    }
-    env$.taper.center <- target.stats
-    env$.taper.coef <- tau
-    env$nw <- nw
-    environment(sanformula) <- env
-   #if(verbose){
-      message(sprintf("SAN network compared to target statistics:\n"))
-      print(cbind(target.stats, summary(sanformula)[-length(target.stats)-1]))
-   #}
-    newformula <- sanformula
+  if(!is.valued(nw)){
+  # fit binary ergm
+    fit.MPLE.control <- control
+    fit.MPLE.control$init <- NULL
+    fit.MPLE.control$MPLE.save.xmat <- TRUE
+    fit.MPLE <- ergm(reformula, control=fit.MPLE.control, estimate="MPLE",
+                     response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
   }
-  fit <- ergm(newformula, control=control,
-              response=response, constraints=constraints, reference=reference, estimate=estimate,
-              eval.loglik=eval.loglik, verbose=verbose, ...)
+  if(is.null(target.stats)){
+    fit <- ergm(newformula, control=control,
+                response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
+  }else{
+    fit <- ergm(newformula, control=control, target.stats=ostats, offset.coef=tau,
+                response=response, constraints=constraints, reference=reference, eval.loglik=eval.loglik, verbose=verbose, ...)
+  }
   
   fit$tapering.centers <- taper.stats
   fit$tapering.centers.o <- ostats
@@ -306,7 +269,6 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   }
   fit$orig.formula <- formula
 
-  if(estimate == "MLE"){
   if(fixed){
     sample <- as.matrix(fit$sample)[,1:npar,drop=FALSE]
     fit$hessian <- fit$hessian[1:npar,1:npar]
@@ -324,8 +286,10 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   fcoef[seq_along(fulltau)[!is.na(nm)]] <- fcoef[nm[!is.na(nm)]]
   fit$tapering.coefficients <- fulltau
   fit$taudelta.offset <- 2*fulltau*as.vector(apply(sapply(fit$sample,function(x){apply(x[,-ncol(x)],2,sd)}),1,mean))
-  fit$taudelta.mean <- apply((2*fit.MPLE$glm.result$value$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$glm.result$value$prior.weights)
-  fit$taudelta.mad <- apply((2*fit.MPLE$glm.result$value$model[,1]-1)*sweep(abs(fit.MPLE$xmat.full),2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$value$glm.result$prior.weights)
+  if(!is.valued(nw)){
+    fit$taudelta.mean <- apply((2*fit.MPLE$glm.result$value$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$glm.result$value$prior.weights)
+    fit$taudelta.mad <- apply((2*fit.MPLE$glm.result$value$model[,1]-1)*sweep(abs(fit.MPLE$xmat.full),2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$value$glm.result$prior.weights)
+  }
 
   # post process fit to alter Hessian etc
   if(is.null(tapering.centers)){
@@ -345,7 +309,6 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
       fit$covar <- -fit$covar 
       fit$hessian <- -fit$hessian 
     }
-  }
   }
 
   class(fit) <- c("ergm.tapered",family,class(fit))

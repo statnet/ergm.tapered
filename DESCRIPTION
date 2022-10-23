@@ -4,8 +4,8 @@ Title: Tapered Exponential-Family Models for Networks
 Version: 1.1-0
 Date: 2022-08-31
 Authors@R: c(
-	  person("Mark S.", "Handcock", role=c("aut","cre"), email="handcock@stat.ucla.edu"),
-	  person("Pavel N.", "Krivitsky", role=c("aut"), email="pavel@uow.edu.au"),
+	  person("Mark S.", "Handcock", role=c("aut","cre"), email="handcock@stat.ucla.edu", comment=c(ORCID="0000-0002-9985-2785")),
+	  person("Pavel N.", "Krivitsky", role=c("aut"), email="pavel@statnet.org"),
 	  person("Ian", "Fellows", role=c("aut"), email="ian@fellstat.com"))
 Description: A set of terms and functions implementing Tapered exponential-family random graph models (ERGMs). Tapered ERGMs are a modification of ERGMs that reduce the effects of phase transitions,
     and with properly chosen hyper-parameters, provably removes all multiphase
