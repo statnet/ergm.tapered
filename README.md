@@ -31,13 +31,13 @@ To install the latest development version from github, you can also use:
 devtools::install_github("statnet/ergm.tapered")
 ```
 <!-- `ergm.tapered` requires a  -->
-<!-- devtools::install_github("statnet/ergm", branch="tapered") -->
+<!-- devtools::install_github("statnet/ergm", ref="tapered") -->
 For now, this will install a variant of the current version of `ergm` (the `tapered` branch) that is needed. In a bit the CRAN version of `ergm` will have it.
 
 If you want to install that variant directly, you can use
 
 ```{r}
-devtools::install_github("statnet/ergm", branch="tapered")
+devtools::install_github("statnet/ergm", ref="tapered")
 ```
 
 # Implementation
