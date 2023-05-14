@@ -40,6 +40,8 @@
 #' errors are below the precision bound, and the Hummel step length is 1 for
 #' two consecutive iterations. This is an experimental feature [ergm()]. 
 #' The default value in [ergm.tapered()] is 0.15, higher than in [ergm()].
+#' @param estimate.tapered.bias logical. It \code{TRUE} the bias of the estimated estimates due to tapering is estimated.
+#' If this is \code{FALSE} the MPLE of the untapered model is not computed, saving computational time. 
 #' @param loglik list List of additional control arguments for the loglik. See \code{\link{control.logLik.ergm.tapered}}.
 #' @param \dots Additional arguments, passed to other functions This argument
 #' is helpful because it collects any control parameters that have been
@@ -71,6 +73,7 @@ control.ergm.tapered<-function(
                        MCMLE.kurtosis.penalty=2.0,
                        MCMLE.termination=c("precision","confidence", "Hummel", "Hotelling", "none"),
                        MCMLE.MCMC.precision=0.005,
+                       estimate.tapered.bias=TRUE,
                  #     MCMC.effectiveSize.maxruns=8,
                        loglik=control.logLik.ergm.tapered(),
                        ...
@@ -88,4 +91,4 @@ control.ergm.tapered<-function(
   set.control.class(c("control.ergm", "control.ergm.tapered"))
 }
 
-STATIC_TAPERING_CONTROLS <- c("MCMLE.kurtosis.location", "MCMLE.kurtosis.scale", "MCMLE.kurtosis.penalty")
+STATIC_TAPERING_CONTROLS <- c("MCMLE.kurtosis.location", "MCMLE.kurtosis.scale", "MCMLE.kurtosis.penalty", "estimate.tapered.bias")

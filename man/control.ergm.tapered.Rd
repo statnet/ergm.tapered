@@ -13,6 +13,7 @@ control.ergm.tapered(
   MCMLE.kurtosis.penalty = 2,
   MCMLE.termination = c("precision", "confidence", "Hummel", "Hotelling", "none"),
   MCMLE.MCMC.precision = 0.005,
+  estimate.tapered.bias = TRUE,
   loglik = control.logLik.ergm.tapered(),
   ...
 )
@@ -46,6 +47,9 @@ standard error. The MCMLE algorithm will terminate when the MCMC standard
 errors are below the precision bound, and the Hummel step length is 1 for
 two consecutive iterations. This is an experimental feature \code{\link[=ergm]{ergm()}}.
 The default value in \code{\link[=ergm.tapered]{ergm.tapered()}} is 0.15, higher than in \code{\link[=ergm]{ergm()}}.}
+
+\item{estimate.tapered.bias}{logical. It \code{TRUE} the bias of the estimated estimates due to tapering is estimated.
+If this is \code{FALSE} the MPLE of the untapered model is not computed, saving computational time.}
 
 \item{loglik}{list List of additional control arguments for the loglik. See \code{\link{control.logLik.ergm.tapered}}.}
 

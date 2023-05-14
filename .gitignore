@@ -95,3 +95,4 @@ dkms.conf
 .Rproj.user
 *.print
 R/ergm.tapered.R.withcomments
+R/ergm.tapered.R.nosancall
