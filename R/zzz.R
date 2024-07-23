@@ -2,12 +2,11 @@
   library.dynam.unload("ergm.tapered",libpath)
 }
 
-
 .onLoad <- function(libname, pkgname){
   utils::globalVariables(names=c(".","NO_LOGLIK_MESSAGE","NO_NULL_IMPLICATION"))
   .RegisterKeywords()
   if(packageVersion("ergm") != "4.3.6983"){
-    stop("ergm.tapered requires a variant of the current version of 'ergm' (the 'tapered' branch).\n  To install it use:\n devtools::install_github('statnet/ergm', ref='tapered')")
+    stop("ergm.tapered requires a variant of the current version of 'ergm' (the 'tapered' branch).\n To install it use:\n devtools::install_github('statnet/ergm', ref='tapered')")
   }
 }
 
