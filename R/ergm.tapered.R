@@ -325,8 +325,8 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   if(estimate == "MLE"){
   if(fixed){
     sample <- as.matrix(fit$sample)[,1:npar,drop=FALSE]
-    fit$hessian <- fit$hessian[1:npar,1:npar]
-    fit$covar <- fit$covar[1:npar,1:npar]
+    fit$hessian <- fit$hessian[1:npar,1:npar,drop=FALSE]
+    fit$covar <- fit$covar[1:npar,1:npar,drop=FALSE]
     fcoef <- coef(fit)[1:npar]
   }else{
     sample <- as.matrix(fit$sample)[,1:npar,drop=FALSE]
@@ -339,7 +339,11 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   fulltau[seq_along(fulltau)[!is.na(nm)]] <- fit$tapering.coef[nm[!is.na(nm)]]
   fcoef[seq_along(fulltau)[!is.na(nm)]] <- fcoef[nm[!is.na(nm)]]
   fit$tapering.coefficients <- fulltau
-  fit$taudelta.offset <- 2*fulltau*as.vector(apply(sapply(fit$sample,function(x){apply(x[,-ncol(x)],2,sd)}),1,mean))
+  if(ncol(fit$sample[[1]])==2){
+   fit$taudelta.offset <- 2*fulltau*as.vector(mean(sapply(fit$sample,function(x){sd(x[,-ncol(x)])})))
+  }else{
+   fit$taudelta.offset <- 2*fulltau*as.vector(apply(sapply(fit$sample,function(x){apply(x[,-ncol(x),drop=FALSE],2,sd)}),1,mean))
+  }
   if(!is.valued(nw) & control$estimate.tapered.bias){
     fit$taudelta.mean <- apply((2*fit.MPLE$glm.result$value$model[,1]-1)*sweep(fit.MPLE$xmat.full,2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$glm.result$value$prior.weights)
     fit$taudelta.mad <- apply((2*fit.MPLE$glm.result$value$model[,1]-1)*sweep(abs(fit.MPLE$xmat.full),2,fulltau,"*"),2,weighted.mean,weight=fit.MPLE$value$glm.result$prior.weights)
@@ -386,7 +390,11 @@ ergm.tapered <- function(formula, r=2, beta=NULL, tau=NULL, tapering.centers=NUL
   dmu <- inv %*% cv
   
   #second derivative of log likelihoods
-  ddll <- diag(rep(0,np))
+  if(np==1){
+    ddll <- matrix(0,ncol=np, nrow=np)
+  }else{
+    ddll <- diag(rep(0,np))
+  }
   dimnames(ddll) <- list(colnames(cv), colnames(cv))
   for(i in 1:np){
     for(j in 1:np){
